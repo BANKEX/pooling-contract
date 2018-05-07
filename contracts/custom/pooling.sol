@@ -81,7 +81,7 @@ contract Pool is IPool {
     raisingTimeout = now + 70;
     icoStart = now + 80; 
     // icoTimeout = 1635556505;
-    fundDeprecatedTimeout = 1825556505;
+    fundDeprecatedTimeout = now + 100;
   }
 
   /**
@@ -191,6 +191,34 @@ contract Pool is IPool {
     emit ETHTransfer(this, msg.sender, receiveETH);
     return true;
   }
+
+  function allowedTokens() public view poolManager returns(uint) {
+    ERC20 ico_contract = ERC20(targetToken);
+    return ico_contract.allowance(icoManager, this);
+  }
+
+  function acceptedETH() public view poolManager returns(uint) {
+    return totalAcceptedETH;
+  }
+
+  function releaseETHFromDepricatedFund(uint _value) public poolManager returns(bool) {
+    require(poolState_() == 0xFF);
+    require(totalAcceptedETH >= _value);
+    poolManager.transfer(_value);
+    totalAcceptedETH = totalAcceptedETH.sub(_value);
+    emit ETHTransfer(this, poolManager, _value);
+    return true;
+  } 
+
+  function releaseTokensFromDepricatedFund(uint _value) public poolManager returns(bool) {
+    require(poolState_() == 0xFF);
+    ERC20 ico_contract = ERC20(targetToken);
+    uint totalAllowance = ico_contract.allowance(icoManager, this);
+    require(totalAllowance >= _value);
+    ico_contract.transferFrom(icoManager, poolManager, _value);
+    emit TokenTransfer(icoManager, poolManager, _value);
+    return true;
+  } 
   
   /**
   * @dev calculate current pool state
@@ -212,8 +240,8 @@ contract Pool is IPool {
     } else {
       return 0;
     }
-  }
-  
+  }  
+
   /**
   * @dev returns current pool state
   * @return current pool state
