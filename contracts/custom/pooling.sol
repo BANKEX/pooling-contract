@@ -104,15 +104,6 @@ contract Pool is IPool {
     return true;
   }
 
-  function checkRaisingTime() private returns(bool){
-    if(block.timestamp <= raisingTimeout) {
-      return true;
-    } 
-    else {
-      return false;
-    }
-  }
-
   function getRaisingETH(uint256 _value) public onlyIcoManager returns(bool) {
     require(poolState_() >= 2 && poolState_() != 0xFF);  
     require(totalAcceptedETH >= _value);
