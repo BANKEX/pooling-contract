@@ -13,23 +13,18 @@ contract IPool is Ownable {
   uint public minimalFundSize;
   uint public maximalFundSize;
   uint public fundDeprecatedTimeout;
+  uint256 public totalAccptedETH;
+  uint8 public poolState;
   mapping (address => uint8) public approvedInvestors;
+  mapping(address=>uint256) investorSum;
   function approveInvestor(address investor) public returns(bool);
   function () public payable;
   function releaseInterest(uint value) public;
-  function moneyBack(uint value) public;
-  function poolState() public view returns(uint8);
+  // function moneyBack(uint value) public;
+  function getPoolState() public view returns(uint8);
 }
 
-contract Pool is IPool {
-    
-  using SafeMath for uint256;
-  uint256 totalAccptedETH;
-
-  mapping(address=>uint256) investorSum;
-
-  uint8 = poolState;
-    
+contract PoolModifiers is IPool {
   modifier onlyApproved() {
     require(approvedInvestors[msg.sender] == 1);
     _;
@@ -54,16 +49,33 @@ contract Pool is IPool {
     require(block.timestamp <= raisingTimeout);
     _;
   }
+}
 
-  function Pool()  public {
+contract Pool is IPool, PoolModifiers {
+    
+  using SafeMath for uint256;
+
+  constructor(address _contractAddress) public {
     poolManager = msg.sender;
     icoManager = msg.sender;
     owner = msg.sender;
+    targetToken = _contractAddress;
   }
   
   function () public payable onlyApproved acceptedDeposit acceptedRaisingTimeout {
     totalAccptedETH = totalAccptedETH.add(msg.value);
     investorSum[msg.sender] = investorSum[msg.sender].add(msg.value);
+  }
+  
+  function transferFromOther(address investor, uint256 _value) private returns(bool){
+    StandardToken m = StandardToken(targetToken);
+    m.transferFrom(address(this), investor, _value);
+    return true;
+  }
+  
+  function releaseInterest(uint value) public {
+    require(investorSum[msg.sender] >= value);
+    transferFromOther(msg.sender, value);
   }
     
   function approveInvestor(address investor)  public onlyOwner returns(bool) {
@@ -71,31 +83,22 @@ contract Pool is IPool {
     return true;
   }
 
-  function checkRaisingTime() private returns(bool){
-    if(block.timestamp <= raisingTimeout) {
-      return true;
-    } 
-    else {
-      return false;
-    }
-  }
-
   function getRaisingETH(uint256 value) public onlyIcoManager returns(bool) {
-    require(value >= totalAccptedETH);
+    require(value >= totalAccptedETH && poolState == 2);
     icoManager.transfer(value);
     return true;
   }
 
-  function poolState() public view returns(uint8) {
+  function getPoolState() public view returns(uint8) {
     return poolState;
   }
 
-  function setPoolState(uint8 _state) public returns(bool) {
+  function setPoolState(uint8 _state) public onlyOwner returns(bool) {
     if(block.timestamp <= raisingTimeout && _state == 1) { 
       poolState = _state;
       return true;
     } 
-    else if (block.timestamp <=icoTimeout && _state == 2) {
+    else if (block.timestamp <= icoTimeout && _state == 2) {
       poolState = _state;
       return true;
     } 
