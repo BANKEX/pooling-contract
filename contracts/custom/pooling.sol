@@ -66,6 +66,9 @@ contract Pool is IPool {
     _;
   }
 
+  /**
+  * @dev constuctor of Pooling token
+  */
   function Pool()  public {
     poolManager = msg.sender;
     icoManager = 0x14723a09acff6d2a60dcdf7aa4aff308fddc160c;
@@ -80,7 +83,10 @@ contract Pool is IPool {
     // icoTimeout = 1635556505;
     fundDeprecatedTimeout = 1825556505;
   }
-  
+
+  /**
+  * @dev payable function to accept ETH from approved investors
+  */
   function () public payable onlyApproved acceptedDeposit acceptedRaisingTimeout {
     require(maximalFundSize >= totalAcceptedETH.add(msg.value));
     totalAcceptedETH = totalAcceptedETH.add(msg.value);
@@ -88,6 +94,11 @@ contract Pool is IPool {
     emit Invest(msg.sender, this, msg.value);
   }
 
+  /**
+  * @dev investors can return their dividents by using this function 
+  * @param _value amount of ETH to return to investor
+  * @return result of operation: true if success
+  */
   function moneyBack(uint _value) public returns(bool) {
     require(poolState_() == 3);
     require(investorSum[msg.sender] >= _value);
@@ -98,12 +109,22 @@ contract Pool is IPool {
     emit MoneyBack(msg.sender, _value);
     return true;
   }
-    
+
+  /**
+  * @dev allow to apporove invesotors of pooling account
+  * @param _investor address of investor who will be approved
+  * @return result of operation: true if success
+  */  
   function approveInvestor(address _investor)  public onlyOwner returns(bool) {
     approvedInvestors[_investor] = 1;
     return true;
   }
-
+  
+  /**
+  * @dev transfer collected amount of ETH to ICO manager address
+  * @param _value in ETH 10^18 which ICO manager wants to get
+  * @return result of operation: true if success
+  */
   function getRaisingETH(uint256 _value) public onlyIcoManager returns(bool) {
     require(poolState_() >= 2 && poolState_() != 0xFF);  
     require(totalAcceptedETH >= _value);
@@ -113,25 +134,48 @@ contract Pool is IPool {
     emit TransferToIcoManager(targetToken, icoManager, _value);
     return true;
   }
-
-  function calculateAllowedTokenBalance(address _owner) internal returns(uint) {
+  
+  /**
+  * @dev calculate amount of tokens that investor can spend 
+  * @param _owner investor's address
+  * @return allowed amount of tokens 
+  */
+  function calculateAllowedTokenBalance(address _owner) private returns(uint) {
     ERC20 ico_contract = ERC20(targetToken);
     uint totalAllowance = ico_contract.allowance(icoManager, this);
     return (investorSum[_owner].mul(totalAllowance.add(usedAllowance)).div(totalAcceptedETH.add(collectedFundForTokens))).sub(receivedTokens[_owner]);
   }
-
+  
+  /**
+  * @dev calculate amount of ETH that investor can spend 
+  * @param _owner investor's address
+  * @return allowed amount of ETH 
+  */
   function calculateAllowedETHBalance(address _owner) internal returns(uint) {
     return (investorSum[_owner].mul(totalAcceptedETH).div(totalAcceptedETH.add(collectedFundForTokens))).sub(receivedETH[_owner]);
   }
-
+  
+  /**
+  * @dev returns amount of tokens on invesotr's balance
+  * @return amount of tokens
+  */
   function investorTokenBalance() public view returns(uint) {
     return calculateAllowedTokenBalance(msg.sender);
   }
-
+  
+  /**
+  * @dev returns amount of ETH on invesotr's balance
+  * @return amount of ETH
+  */
   function investorETHBalance() public view returns(uint) {
     return calculateAllowedETHBalance(msg.sender);
   }
-
+  
+  /**
+  * @dev transfer dividnets to invstor address in ETH
+  * @param _value amount of ETH in 10^18
+  * @return result of operation: true if success
+  */
   function releaseInterest(uint _value) public returns(bool) {
     require(poolState_() == 4);
     uint currentTokenBalance = calculateAllowedTokenBalance(msg.sender);
@@ -147,7 +191,11 @@ contract Pool is IPool {
     emit ETHTransfer(this, msg.sender, receiveETH);
     return true;
   }
-
+  
+  /**
+  * @dev calculate current pool state
+  * @return current pool state
+  */
   function poolState_() internal view returns(uint8) {
     if(block.timestamp >= startRaising && block.timestamp < raisingTimeout) {
       return 1;
@@ -165,7 +213,11 @@ contract Pool is IPool {
       return 0;
     }
   }
-
+  
+  /**
+  * @dev returns current pool state
+  * @return current pool state
+  */
   function poolState() public view returns(uint8) {
     return poolState_();
   }
