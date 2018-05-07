@@ -25,12 +25,14 @@ contract IPool is Ownable {
   mapping (address => uint256) internal investorSum;
   mapping (address => uint256) internal receivedTokens;
   mapping (address => uint256) internal receivedETH;
-
+  
+  function setManager(address _manager) public returns(bool);
+  function setTargetToken(address _tokenAddress) public returns(bool);
   function moneyBack(uint256 _value) public returns(bool);
   function approveInvestor(address _investor)  public returns(bool);
   function getRaisingETH(uint256 _value) public returns(bool);
-  function calculateAllowedTokenBalance(address _owner) private returns(uint256);
-  function calculateAllowedETHBalance(address _owner) internal returns(uint256);
+  function calculateAllowedTokenBalance(address _owner) private view returns(uint256);
+  function calculateAllowedETHBalance(address _owner) private view returns(uint256);
   function investorTokenBalance() public view returns(uint256);
   function investorETHBalance() public view returns(uint256);
   function releaseInterest(uint256 _value) public returns(bool);
@@ -86,9 +88,7 @@ contract Pool is PoolModifiers {
   */
   constructor() public{ 
     poolManager = msg.sender;
-    icoManager = 0x14723a09acff6d2a60dcdf7aa4aff308fddc160c;
     owner = msg.sender;
-    targetToken = 0x0b2f1fc73fd95d53ef57af3ca4155ec97725350d;
     minimalDeposit = 1e8;
     minimalFundSize = 1e18;
     maximalFundSize = 3e18;
@@ -97,6 +97,27 @@ contract Pool is PoolModifiers {
     icoStart = now + 80; 
     // icoTimeout = 1635556505;
     fundDeprecatedTimeout = now + 100;
+  }
+  
+  
+  /**
+  * @dev set ICO manager
+  * @param _manager of ICO manager
+  * @return result of operation: true if success
+  */
+  function setManager(address _manager) public onlyOwner returns(bool) {
+    icoManager = _manager;
+    return true;
+  }
+  
+  /**
+  * @dev set targetToken address
+  * @param _tokenAddress token address
+  * @return result of operation: true if success
+  */
+  function setTargetToken(address _tokenAddress) public onlyIcoManager returns(bool) {
+    targetToken = _tokenAddress;
+    return true;
   }
 
   /**
@@ -155,7 +176,7 @@ contract Pool is PoolModifiers {
   * @param _owner investor's address
   * @return allowed amount of tokens 
   */
-  function calculateAllowedTokenBalance(address _owner) private returns(uint256) {
+  function calculateAllowedTokenBalance(address _owner) private view returns(uint256) {
     ERC20 ico_contract = ERC20(targetToken);
     uint256 totalAllowance = ico_contract.allowance(icoManager, this);
     return (investorSum[_owner].mul(totalAllowance.add(usedAllowance)).div(totalAcceptedETH.add(collectedFundForTokens))).sub(receivedTokens[_owner]);
@@ -166,7 +187,7 @@ contract Pool is PoolModifiers {
   * @param _owner investor's address
   * @return allowed amount of ETH 
   */
-  function calculateAllowedETHBalance(address _owner) internal returns(uint256) {
+  function calculateAllowedETHBalance(address _owner) private view returns(uint256) {
     return (investorSum[_owner].mul(totalAcceptedETH).div(totalAcceptedETH.add(collectedFundForTokens))).sub(receivedETH[_owner]);
   }
   
