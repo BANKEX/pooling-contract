@@ -5,7 +5,7 @@ import "../token/ERC20/ERC20.sol";
 
 contract IPool is Ownable {
   function approveInvestor(address investor) public returns(bool);
-  function releaseTokenInterest(uint _value) public returns(bool);
+  function releaseInterest(uint _value) public returns(bool);
   function moneyBack(uint _value) public returns(bool);
   function poolState() public view returns(uint8);
 }
@@ -34,6 +34,7 @@ contract Pool is IPool {
   uint public fundDeprecatedTimeout;
   uint256 totalAcceptedETH;
   uint256 collectedFundForTokens;
+  uint256 usedAllowance;
   
   mapping (address => uint8) public approvedInvestors;
   mapping (address => uint256) investorSum;
@@ -125,11 +126,7 @@ contract Pool is IPool {
   function calculateAllowedTokenBalance(address _owner) internal returns(uint) {
     ERC20 ico_contract = ERC20(targetToken);
     uint totalAllowance = ico_contract.allowance(icoManager, this);
-    if (collectedFundForTokens < investorSum[_owner]) {
-      return (collectedFundForTokens.mul(totalAllowance).div(investorSum[_owner])).sub(receivedTokens[_owner]);
-    } else {
-      return (investorSum[_owner].mul(totalAllowance).div(collectedFundForTokens)).sub(receivedTokens[_owner]);
-    }
+    return (investorSum[_owner].mul(totalAllowance.add(usedAllowance)).div(totalAcceptedETH.add(collectedFundForTokens))).sub(receivedTokens[_owner]);
   }
 
   function calculateAllowedETHBalance(address _owner) internal returns(uint) {
@@ -144,13 +141,14 @@ contract Pool is IPool {
     return calculateAllowedETHBalance(msg.sender);
   }
 
-  function releaseTokenInterest(uint _value) public returns(bool) {
+  function releaseInterest(uint _value) public returns(bool) {
     require(poolState_() == 4);
     uint currentTokenBalance = calculateAllowedTokenBalance(msg.sender);
     require(currentTokenBalance >= _value);
     ERC20 ico_contract = ERC20(targetToken);
     ico_contract.transferFrom(icoManager, msg.sender, _value);
     receivedTokens[msg.sender] = receivedTokens[msg.sender].add(_value);
+    usedAllowance = usedAllowance.add(_value);
     emit TokenTransfer(targetToken, msg.sender, _value);
     uint receiveETH = _value.mul(calculateAllowedETHBalance(msg.sender)).div(currentTokenBalance);
     msg.sender.transfer(receiveETH);
