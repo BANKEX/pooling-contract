@@ -1,0 +1,14 @@
+linkPrefix = "/pooling-contract"
+name = "pooling-contract"
+version = "1.0.0"
+description = ""
+buildTime = 2018-05-08T12:36:09.946Z
+target = "doxity"
+src = "contracts/**"
+dir = "pages/docs"
+out = "docs"
+author = ""
+license = "ISC"
+blacklist = ["Migrations.sol", "Ownable.sol", "SafeMath.sol"]
+
+[interaction]

@@ -1,4 +1,4 @@
-node_modules/
+doxity/node_modules
 .idea/
 .vscode/
 .editorconfig
