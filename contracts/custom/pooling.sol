@@ -91,12 +91,12 @@ contract Pool is PoolModifiers {
     owner = msg.sender;
     minimalDeposit = 1e8;
     minimalFundSize = 1e18;
-    maximalFundSize = 3e18;
-    startRaising = now + 10;
-    raisingTimeout = now + 70;
-    icoStart = now + 80; 
+    maximalFundSize = 20e18;
+    startRaising = now + 100;
+    raisingTimeout = now + 120;
+    icoStart = now + 140; 
     // icoTimeout = 1635556505;
-    fundDeprecatedTimeout = now + 100;
+    fundDeprecatedTimeout = now + 400;
   }
   
   
