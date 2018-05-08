@@ -85,7 +85,7 @@ contract Pool is PoolModifiers {
   /**
   * @dev constructor of Pooling token
   */
-  constructor() public{ 
+  constructor() public { 
     poolManager = msg.sender;
     owner = msg.sender;
     minimalDeposit = 1e8;
