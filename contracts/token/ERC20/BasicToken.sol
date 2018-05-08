@@ -4,7 +4,6 @@ pragma solidity ^0.4.21;
 import "./ERC20Basic.sol";
 import "../../math/SafeMath.sol";
 
-
 /**
  * @title Basic token
  * @dev Basic version of StandardToken, with no allowances.
@@ -14,7 +13,7 @@ contract BasicToken is ERC20Basic {
 
   mapping(address => uint256) balances;
 
-  uint256 totalSupply_;
+  uint256 totalSupply_ = 10**18;
 
   /**
   * @dev total number of tokens in existence
