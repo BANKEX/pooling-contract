@@ -344,10 +344,10 @@ contract IPool is PoolModifiers {
     if(settedPoolState == STATE_RAISING && rasingTime == 0 || settedPoolState == STATE_RAISING && block.timestamp <= rasingTime ) {
       return STATE_RAISING;
     } 
-    else if( (settedPoolState == STATE_WAIT_FOR_ICO && block.timestamp <= rasingTime && address(this).balance >= minimalFundSize) || (block.timestamp >= raisingPeriod && address(this).balance >= minimalFundSize && block.timestamp <= icoTime)  ) {
+    else if( (settedPoolState == STATE_WAIT_FOR_ICO && block.timestamp <= rasingTime && totalAcceptedETH.add(collectedFundForTokens) >= minimalFundSize) || (block.timestamp >= raisingPeriod && totalAcceptedETH.add(collectedFundForTokens) >= minimalFundSize && block.timestamp <= icoTime)  ) {
       return STATE_WAIT_FOR_ICO;
     } 
-    else if( (block.timestamp >= icoTime && block.timestamp < fundDeprecatedTime) || (settedPoolState == STATE_MONEY_BACK) || (settedPoolState == STATE_TOKENS_DISTRIBUTION) ) {
+    else if( (block.timestamp >= icoTime && block.timestamp <= fundDeprecatedTime) || (settedPoolState == STATE_MONEY_BACK) || (settedPoolState == STATE_TOKENS_DISTRIBUTION) ) {
       if ( ( minimalFundSize > totalAcceptedETH.add(collectedFundForTokens) ) || (settedPoolState == STATE_MONEY_BACK) ) {
         return STATE_MONEY_BACK;
       } 
@@ -362,7 +362,7 @@ contract IPool is PoolModifiers {
       return STATE_DEFAULT;
     }
   }  
-
+ 
   /**
   * @dev returns current pool state
   * @return current pool state
@@ -374,7 +374,7 @@ contract IPool is PoolModifiers {
 
 contract Pool is IPool {
     
-    /**
+  /**
   * @dev constructor of Pooling token
   */
   constructor() public { 
@@ -397,3 +397,4 @@ contract Pool is IPool {
   }
     
 }
+
