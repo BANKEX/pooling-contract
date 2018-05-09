@@ -2,22 +2,48 @@ pragma solidity ^0.4.21;
 import "../ownership/Ownable.sol";
 import "../math/SafeMath.sol";
 import "../token/ERC20/ERC20.sol";
-contract IPool is Ownable {
+
+
+contract IPoolVar is Ownable {
+
+  uint8 constant STATE_DEFAULT = 0;
+  uint8 constant STATE_RAISING = 1;
+  uint8 constant STATE_WAIT_FOR_ICO = 2;
+  uint8 constant STATE_MONEY_BACK = 3;
+  uint8 constant STATE_TOKENS_DISTRIBUTION = 4;
+  uint8 constant STATE_FUND_DEPRECATED = 0xFF;
+
 
   address public poolManager;
   address public icoManager;
   address public owner;
   address public targetToken;
-  uint256 public startRaising;
-  uint256 public raisingTimeout;
-  uint256 public icoStart;
+
   uint256 public minimalDeposit;
   uint256 public minimalFundSize;
   uint256 public maximalFundSize;
-  uint256 public fundDeprecatedTimeout;
+  
+  uint256 public rasingTime;
+  uint256 public icoTime;
+  uint256 public fundDeprecatedTime;
+  
+  uint256  public raisingPeriod;
+  uint256  public waitingPeriod;
+  uint256  public depricatedPeriod;
+  
   uint256 public totalAcceptedETH;
   uint256 internal collectedFundForTokens;
   uint256 internal usedAllowance;
+
+  uint256  public PERCENT_POOL_MANAGER;
+  uint256  public PERCENT_ADMIN;
+  uint256  public PERCENT_ICO_MANAGER;
+
+  uint256 public poolManagerPortion;
+  uint256 public adminPortion;
+  uint256 public icoManagerPortion;
+
+  uint8 internal settedPoolState;
   // uint256 public icoTimeout;
 
   mapping (address => uint8) public approvedInvestors;
@@ -28,17 +54,17 @@ contract IPool is Ownable {
   function setManager(address _manager) public returns(bool);
   function setTargetToken(address _tokenAddress) public returns(bool);
   function moneyBack(uint256 _value) public returns(bool);
-  function approveInvestor(address _investor)  public returns(bool);
+  // function approveInvestor(address _investor)  public returns(bool);
   function getRaisingETH(uint256 _value) public returns(bool);
-  function calculateAllowedTokenBalance(address _owner) private view returns(uint256);
-  function calculateAllowedETHBalance(address _owner) private view returns(uint256);
+  function calculateAllowedTokenBalance(address _owner) internal view returns(uint256);
+  function calculateAllowedETHBalance(address _owner) internal view returns(uint256);
   function investorTokenBalance() public view returns(uint256);
   function investorETHBalance() public view returns(uint256);
   function releaseInterest(uint256 _value) public returns(bool);
   function allowedTokens() public view returns(uint256);
   function releaseEtherFromDepricatedFund(uint256 _value) public returns(bool);
   function releaseTokensFromDepricatedFund(uint256 _value) public returns(bool);
-  function poolState_() private view returns(uint8);
+  function poolState_() internal view returns(uint8);
   function poolState() public view returns(uint8);
 
   event MoneyBack(address indexed to, uint256 value);
@@ -49,12 +75,17 @@ contract IPool is Ownable {
 
 }
 
-contract PoolModifiers is IPool {
+contract PoolModifiers is IPoolVar {
 
-  modifier onlyApproved() {
-    require(approvedInvestors[msg.sender] == 1);
+  modifier state(uint8 _state){
+    require(poolState_()==_state);
     _;
   }
+
+  // modifier onlyApproved() {
+  //   require(approvedInvestors[msg.sender] == 1);
+  //   _;
+  // }
     
   modifier onlyIcoManager() {
     require(icoManager == msg.sender);
@@ -71,40 +102,33 @@ contract PoolModifiers is IPool {
     _;
   }
     
-  modifier acceptedRaisingTimeout() {
-    require(block.timestamp <= raisingTimeout);
+  modifier acceptedrasingTime() {
+    require(block.timestamp <= rasingTime);
+    _;
+  }
+
+  modifier onlyStateHolders() {
+    require(icoManager == msg.sender || poolManager == msg.sender || owner == msg.sender);
+    _;
+  }
+
+  modifier onlyAdminOrPoolMng() {
+    require(poolManager == msg.sender || owner == msg.sender);
     _;
   }
 
 }
 
-contract Pool is PoolModifiers {
+contract IPool is PoolModifiers {
     
   using SafeMath for uint256;
-
-  /**
-  * @dev constructor of Pooling token
-  */
-  constructor() public { 
-    poolManager = msg.sender;
-    owner = msg.sender;
-    minimalDeposit = 1e8;
-    minimalFundSize = 1e18;
-    maximalFundSize = 20e18;
-    startRaising = now + 100;
-    raisingTimeout = now + 120;
-    icoStart = now + 140; 
-    // icoTimeout = 1635556505;
-    fundDeprecatedTimeout = now + 400;
-  }
-  
   
   /**
   * @dev set ICO manager
   * @param _manager of ICO manager
   * @return result of operation: true if success
   */
-  function setManager(address _manager) public onlyOwner returns(bool) {
+  function setManager(address _manager) public onlyOwner state(STATE_DEFAULT) returns(bool) {
     icoManager = _manager;
     return true;
   }
@@ -114,7 +138,7 @@ contract Pool is PoolModifiers {
   * @param _tokenAddress token address
   * @return result of operation: true if success
   */
-  function setTargetToken(address _tokenAddress) public onlyIcoManager returns(bool) {
+  function setTargetToken(address _tokenAddress) public onlyOwner state(STATE_DEFAULT) returns(bool) {
     targetToken = _tokenAddress;
     return true;
   }
@@ -122,11 +146,24 @@ contract Pool is PoolModifiers {
   /**
   * @dev payable function to accept ETH from approved investors
   */
-  function () public payable onlyApproved acceptedDeposit acceptedRaisingTimeout {
-    require(maximalFundSize >= totalAcceptedETH.add(msg.value));
-    totalAcceptedETH = totalAcceptedETH.add(msg.value);
-    investorSum[msg.sender] = investorSum[msg.sender].add(msg.value);
-    emit Invest(msg.sender, this, msg.value);
+  function pay() public payable {
+
+    if (poolState() == STATE_RAISING) {
+      require(maximalFundSize >= totalAcceptedETH.add(msg.value));
+      poolManagerPortion += (msg.value.mul(PERCENT_POOL_MANAGER)).div(100);    
+      adminPortion += (msg.value.mul(PERCENT_ADMIN)).div(100);    
+      icoManagerPortion += (msg.value.mul(PERCENT_ICO_MANAGER)).div(100);    
+      totalAcceptedETH = (totalAcceptedETH.add(msg.value)).sub( ( poolManagerPortion.add(adminPortion) ).add(icoManagerPortion));
+      investorSum[msg.sender] = (investorSum[msg.sender].add(msg.value)).sub( ( poolManagerPortion.add(adminPortion) ).add(icoManagerPortion));
+      emit Invest(msg.sender, this, msg.value);
+    }
+    else if (poolState() == STATE_MONEY_BACK) {
+      moneyBack(investorSum[msg.sender]);
+    } 
+    else if (poolState() == STATE_TOKENS_DISTRIBUTION) {
+      releaseInterest(calculateAllowedTokenBalance(msg.sender));
+    }
+
   }
 
   /**
@@ -134,10 +171,9 @@ contract Pool is PoolModifiers {
   * @param _value amount of ETH to return to investor
   * @return result of operation: true if success
   */
-  function moneyBack(uint256 _value) public returns(bool) {
-    require(poolState_() == 3);
-    require(investorSum[msg.sender] >= _value);
-    require(_value >= minimalDeposit);
+  function moneyBack(uint256 _value) public state(STATE_MONEY_BACK) returns(bool) {
+    // require(investorSum[msg.sender] >= _value);
+    // require(_value >= minimalDeposit);
     investorSum[msg.sender] = investorSum[msg.sender].sub(_value);
     totalAcceptedETH = totalAcceptedETH.sub(_value);
     msg.sender.transfer(_value);
@@ -150,10 +186,10 @@ contract Pool is PoolModifiers {
   * @param _investor address of investor who will be approved
   * @return result of operation: true if success
   */  
-  function approveInvestor(address _investor)  public onlyOwner returns(bool) {
-    approvedInvestors[_investor] = 1;
-    return true;
-  }
+  // function approveInvestor(address _investor)  public onlyOwner returns(bool) {
+  //   approvedInvestors[_investor] = 1;
+  //   return true;
+  // }
   
   /**
   * @dev transfer collected amount of ETH to ICO manager address
@@ -175,7 +211,7 @@ contract Pool is PoolModifiers {
   * @param _owner investor's address
   * @return allowed amount of tokens 
   */
-  function calculateAllowedTokenBalance(address _owner) private view returns(uint256) {
+  function calculateAllowedTokenBalance(address _owner) internal view returns(uint256) {
     ERC20 ico_contract = ERC20(targetToken);
     uint256 totalAllowance = ico_contract.allowance(icoManager, this);
     return (investorSum[_owner].mul(totalAllowance.add(usedAllowance)).div(totalAcceptedETH.add(collectedFundForTokens))).sub(receivedTokens[_owner]);
@@ -186,7 +222,7 @@ contract Pool is PoolModifiers {
   * @param _owner investor's address
   * @return allowed amount of ETH 
   */
-  function calculateAllowedETHBalance(address _owner) private view returns(uint256) {
+  function calculateAllowedETHBalance(address _owner) internal view returns(uint256) {
     return (investorSum[_owner].mul(totalAcceptedETH).div(totalAcceptedETH.add(collectedFundForTokens))).sub(receivedETH[_owner]);
   }
   
@@ -207,12 +243,11 @@ contract Pool is PoolModifiers {
   }
   
   /**
-  * @dev transfer dividnets to invstor address in ETH
-  * @param _value amount of ETH in 10^18
+  * @dev transfer dividnets to invstor address in ETH and tokens 
+  * @param _value amount of tokens
   * @return result of operation: true if success
   */
-  function releaseInterest(uint256 _value) public returns(bool) {
-    require(poolState_() == 4);
+  function releaseInterest(uint256 _value) public state(STATE_TOKENS_DISTRIBUTION) returns(bool) {
     uint256 currentTokenBalance = calculateAllowedTokenBalance(msg.sender);
     require(currentTokenBalance >= _value);
     ERC20 ico_contract = ERC20(targetToken);
@@ -240,8 +275,7 @@ contract Pool is PoolModifiers {
   * @dev transfer all amount of ETH from pooling contract when fund id depricated
   * @return result of operation: true if success
   */
-  function releaseEtherFromDepricatedFund(uint256 _value) public onlyPoolManager returns(bool) {
-    require(poolState_() == 0xFF);
+  function releaseEtherFromDepricatedFund(uint256 _value) public onlyPoolManager state(STATE_FUND_DEPRECATED) returns(bool) {
     require(totalAcceptedETH >= _value);
     poolManager.transfer(_value);
     totalAcceptedETH = totalAcceptedETH.sub(_value);
@@ -253,8 +287,7 @@ contract Pool is PoolModifiers {
   * @dev transfer all amount of tokens from pooling contract when fund id depricated
   * @return result of operation: true if success
   */
-  function releaseTokensFromDepricatedFund(uint256 _value) public onlyPoolManager returns(bool) {
-    require(poolState_() == 0xFF);
+  function releaseTokensFromDepricatedFund(uint256 _value) public onlyPoolManager state(STATE_FUND_DEPRECATED) returns(bool) {
     ERC20 ercToken = ERC20(targetToken);
     uint256 totalAllowance = ercToken.allowance(icoManager, this);
     require(totalAllowance >= _value);
@@ -262,31 +295,72 @@ contract Pool is PoolModifiers {
     emit TokenTransfer(icoManager, poolManager, _value);
     return true;
   } 
+
+  /**
+  * @dev Pool Manager start Raising ETH
+  * @return result of operation: true if success
+  */
+  function startRasing() public onlyPoolManager state(STATE_DEFAULT) returns(bool) {
+    rasingTime = raisingPeriod + block.timestamp;
+    icoTime =  waitingPeriod + block.timestamp;
+    fundDeprecatedTime = depricatedPeriod + block.timestamp;
+    
+    settedPoolState = STATE_RAISING;
+    return true;
+  }
+
+  /**
+  * @dev Pool Manager or ICO manager or Admin can start Wait for ICO state if contract have enough money 
+  * @return result of operation: true if success
+  */
+  function startWaitForICO() public onlyStateHolders state(STATE_RAISING) returns(bool) {
+    require(address(this).balance >= minimalFundSize);
+    settedPoolState = STATE_WAIT_FOR_ICO;
+    return true;
+  }
+
+  /**
+  * @dev Pool Manager or Admin can start money back if it's Raising state
+  * @return result of operation: true if success
+  */
+  function startMoneyBack() public onlyAdminOrPoolMng state(STATE_RAISING) returns(bool) {
+    settedPoolState = STATE_MONEY_BACK;
+    return true;
+  }
+
+  /**
+  * @dev Pool Manager or Admin can start distribution
+  * @return result of operation: true if success
+  */
+  function startDistribution() public onlyStateHolders state(STATE_WAIT_FOR_ICO) returns(bool) {
+    settedPoolState = STATE_TOKENS_DISTRIBUTION;
+    return true;
+  }
   
   /**
   * @dev calculate current pool state
   * @return current pool state
   */
-  function poolState_() private view returns(uint8) {
-    if(block.timestamp >= startRaising && block.timestamp < raisingTimeout) {
-      return 1;
+  function poolState_() internal view returns(uint8) {
+    if(settedPoolState == STATE_RAISING) {
+      return STATE_RAISING;
     } 
-    else if(block.timestamp >= raisingTimeout && block.timestamp < icoStart) {
-      return 2;
+    else if( (settedPoolState == STATE_WAIT_FOR_ICO && block.timestamp < icoTime) ) {
+      return STATE_WAIT_FOR_ICO;
     } 
-    else if(block.timestamp >= icoStart && block.timestamp < fundDeprecatedTimeout) {
-      if (minimalFundSize > totalAcceptedETH.add(collectedFundForTokens)) {
-        return 3;
+    else if( (block.timestamp >= icoTime && block.timestamp < fundDeprecatedTime) || (settedPoolState == STATE_MONEY_BACK) || (settedPoolState == STATE_TOKENS_DISTRIBUTION) ) {
+      if ( ( minimalFundSize > totalAcceptedETH.add(collectedFundForTokens) ) || (settedPoolState == STATE_MONEY_BACK) ) {
+        return STATE_MONEY_BACK;
       } 
-      else {
-        return 4;
+      else if (settedPoolState == STATE_TOKENS_DISTRIBUTION){
+        return STATE_TOKENS_DISTRIBUTION;
       }
     } 
-    else if(block.timestamp >= fundDeprecatedTimeout) {
-      return 0xFF;
+    else if(block.timestamp >= fundDeprecatedTime && fundDeprecatedTime != 0) {
+      return STATE_FUND_DEPRECATED;
     } 
     else {
-      return 0;
+      return STATE_DEFAULT;
     }
   }  
 
@@ -297,4 +371,30 @@ contract Pool is PoolModifiers {
   function poolState() public view returns(uint8) {
     return poolState_();
   }
+}
+
+contract Pool is IPool {
+    
+    /**
+  * @dev constructor of Pooling token
+  */
+  constructor() public { 
+
+    poolManager = msg.sender;
+    owner = msg.sender;
+
+    minimalDeposit = 1e8;
+    minimalFundSize = 1e18;
+    maximalFundSize = 20e18;
+    
+    raisingPeriod = 1000;
+    waitingPeriod = 10000;
+    depricatedPeriod = 1000000;
+    
+    PERCENT_POOL_MANAGER = 5;
+    PERCENT_ADMIN = 3;
+    PERCENT_ICO_MANAGER = 2;
+    
+  }
+    
 }
