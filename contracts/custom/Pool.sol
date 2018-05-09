@@ -3,7 +3,6 @@ import "../ownership/Ownable.sol";
 import "../math/SafeMath.sol";
 import "../token/ERC20/ERC20.sol";
 
-
 contract IPoolVar is Ownable {
 
   uint8 constant STATE_DEFAULT = 0;
@@ -153,7 +152,7 @@ contract IPool is PoolModifiers {
       poolManagerPortion += (msg.value.mul(PERCENT_POOL_MANAGER)).div(100);    
       adminPortion += (msg.value.mul(PERCENT_ADMIN)).div(100);    
       icoManagerPortion += (msg.value.mul(PERCENT_ICO_MANAGER)).div(100);    
-      totalAcceptedETH = (totalAcceptedETH.add(msg.value)).sub( ( poolManagerPortion.add(adminPortion) ).add(icoManagerPortion));
+      totalAcceptedETH = (totalAcceptedETH.add(msg.value)).sub( ( poolManagerPortion.add(adminPortion) ).add(icoManagerPortion) );
       investorSum[msg.sender] = (investorSum[msg.sender].add(msg.value)).sub( ( poolManagerPortion.add(adminPortion) ).add(icoManagerPortion));
       emit Invest(msg.sender, this, msg.value);
     }
@@ -172,8 +171,8 @@ contract IPool is PoolModifiers {
   * @return result of operation: true if success
   */
   function moneyBack(uint256 _value) public state(STATE_MONEY_BACK) returns(bool) {
-    // require(investorSum[msg.sender] >= _value);
-    // require(_value >= minimalDeposit);
+    require(investorSum[msg.sender] >= _value);
+    require(_value >= minimalDeposit);
     investorSum[msg.sender] = investorSum[msg.sender].sub(_value);
     totalAcceptedETH = totalAcceptedETH.sub(_value);
     msg.sender.transfer(_value);
@@ -342,17 +341,17 @@ contract IPool is PoolModifiers {
   * @return current pool state
   */
   function poolState_() internal view returns(uint8) {
-    if(settedPoolState == STATE_RAISING) {
+    if(settedPoolState == STATE_RAISING && rasingTime == 0 || settedPoolState == STATE_RAISING && block.timestamp <= rasingTime ) {
       return STATE_RAISING;
     } 
-    else if( (settedPoolState == STATE_WAIT_FOR_ICO && block.timestamp < icoTime) ) {
+    else if( (settedPoolState == STATE_WAIT_FOR_ICO && block.timestamp <= rasingTime && address(this).balance >= minimalFundSize) || (block.timestamp >= raisingPeriod && address(this).balance >= minimalFundSize && block.timestamp <= icoTime)  ) {
       return STATE_WAIT_FOR_ICO;
     } 
     else if( (block.timestamp >= icoTime && block.timestamp < fundDeprecatedTime) || (settedPoolState == STATE_MONEY_BACK) || (settedPoolState == STATE_TOKENS_DISTRIBUTION) ) {
       if ( ( minimalFundSize > totalAcceptedETH.add(collectedFundForTokens) ) || (settedPoolState == STATE_MONEY_BACK) ) {
         return STATE_MONEY_BACK;
       } 
-      else if (settedPoolState == STATE_TOKENS_DISTRIBUTION){
+      else if (settedPoolState == STATE_TOKENS_DISTRIBUTION || block.timestamp >=icoTime ){
         return STATE_TOKENS_DISTRIBUTION;
       }
     } 
@@ -382,13 +381,13 @@ contract Pool is IPool {
 
     poolManager = msg.sender;
     owner = msg.sender;
-
+    
     minimalDeposit = 1e8;
     minimalFundSize = 1e18;
     maximalFundSize = 20e18;
     
-    raisingPeriod = 1000;
-    waitingPeriod = 10000;
+    raisingPeriod = 30;
+    waitingPeriod = 40;
     depricatedPeriod = 1000000;
     
     PERCENT_POOL_MANAGER = 5;
