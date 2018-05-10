@@ -95,17 +95,17 @@ contract IPoolVar is Ownable {
   /**
   * @dev percent of collected sum which pool manager will receive
   */
-  uint256 public PERCENT_POOL_MANAGER;
+  uint256 public percentPoolManager;
 
   /**
   * @dev percent of collected sum which admin will receive
   */
-  uint256 public PERCENT_ADMIN;
+  uint256 public percentAdmin;
 
   /**
   * @dev percent of collected sum which ico manager will receive
   */
-  uint256 public PERCENT_ICO_MANAGER;
+  uint256 public percentIcoManager;
   
   /**
   * @dev amount of ETH which is portion of poolManager from fund's collected amount
@@ -232,11 +232,11 @@ contract IPool is PoolModifiers {
 
     if (poolState() == STATE_RAISING) {
       require(maximalFundSize >= totalAcceptedETH.add(msg.value));
-      poolManagerPortion += (msg.value.mul(PERCENT_POOL_MANAGER)).div(100);    
-      adminPortion += (msg.value.mul(PERCENT_ADMIN)).div(100);    
-      icoManagerPortion += (msg.value.mul(PERCENT_ICO_MANAGER)).div(100);    
-      totalAcceptedETH = (totalAcceptedETH.add(msg.value)).sub( ( poolManagerPortion.add(adminPortion) ).add(icoManagerPortion) );
-      investorSum[msg.sender] = (investorSum[msg.sender].add(msg.value)).sub( ( poolManagerPortion.add(adminPortion) ).add(icoManagerPortion));
+      poolManagerPortion += (msg.value.mul(percentPoolManager)).div(100);    
+      adminPortion += (msg.value.mul(percentAdmin)).div(100);    
+      icoManagerPortion += (msg.value.mul(percentIcoManager)).div(100);    
+      totalAcceptedETH = (totalAcceptedETH.add(msg.value)).sub((poolManagerPortion.add(adminPortion)).add(icoManagerPortion));
+      investorSum[msg.sender] = (investorSum[msg.sender].add(msg.value)).sub((poolManagerPortion.add(adminPortion)).add(icoManagerPortion));
       emit Invest(msg.sender, this, msg.value);
     }
     else if (poolState() == STATE_MONEY_BACK) {
@@ -316,8 +316,8 @@ contract IPool is PoolModifiers {
   * @return allowed amount of tokens 
   */
   function calculateAllowedTokenBalance(address _owner) internal view returns(uint256) {
-    ERC20 ico_contract = ERC20(targetToken);
-    uint256 totalAllowance = ico_contract.allowance(icoManager, this);
+    ERC20 icoContract = ERC20(targetToken);
+    uint256 totalAllowance = icoContract.allowance(icoManager, this);
     return (investorSum[_owner].mul(totalAllowance.add(usedAllowance)).div(totalAcceptedETH.add(collectedFundForTokens))).sub(receivedTokens[_owner]);
   }
   
@@ -354,8 +354,8 @@ contract IPool is PoolModifiers {
   function releaseInterest(uint256 _value) public state(STATE_TOKENS_DISTRIBUTION) returns(bool) {
     uint256 currentTokenBalance = calculateAllowedTokenBalance(msg.sender);
     require(currentTokenBalance >= _value);
-    ERC20 ico_contract = ERC20(targetToken);
-    ico_contract.transferFrom(icoManager, msg.sender, _value);
+    ERC20 icoContract = ERC20(targetToken);
+    icoContract.transferFrom(icoManager, msg.sender, _value);
     receivedTokens[msg.sender] = receivedTokens[msg.sender].add(_value);
     usedAllowance = usedAllowance.add(_value);
     emit TokenTransfer(targetToken, msg.sender, _value);
@@ -406,7 +406,7 @@ contract IPool is PoolModifiers {
   */
   function startRasing() public onlyPoolManager state(STATE_DEFAULT) returns(bool) {
     rasingTime = raisingPeriod + block.timestamp;
-    icoTime =  waitingPeriod + block.timestamp;
+    icoTime = waitingPeriod + block.timestamp;
     fundDeprecatedTime = depricatedPeriod + block.timestamp;
     
     settedPoolState = STATE_RAISING;
@@ -456,7 +456,7 @@ contract IPool is PoolModifiers {
       if ( ( minimalFundSize > totalAcceptedETH.add(collectedFundForTokens) ) || (settedPoolState == STATE_MONEY_BACK) ) {
         return STATE_MONEY_BACK;
       } 
-      else if (settedPoolState == STATE_TOKENS_DISTRIBUTION || block.timestamp >=icoTime ){
+      else if (settedPoolState == STATE_TOKENS_DISTRIBUTION || block.timestamp >= icoTime ){
         return STATE_TOKENS_DISTRIBUTION;
       }
     } 
@@ -495,9 +495,9 @@ contract Pool is IPool {
     waitingPeriod = 40;
     depricatedPeriod = 1000000;
     
-    PERCENT_POOL_MANAGER = 5;
-    PERCENT_ADMIN = 3;
-    PERCENT_ICO_MANAGER = 2;
+    percentPoolManager = 5;
+    percentAdmin = 3;
+    percentIcoManager = 2;
     
   }
     
