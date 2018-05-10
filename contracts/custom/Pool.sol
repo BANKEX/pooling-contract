@@ -3,6 +3,7 @@ import "../ownership/Ownable.sol";
 import "../math/SafeMath.sol";
 import "../token/ERC20/ERC20.sol";
 
+
 contract IPoolVar is Ownable {
 
   uint8 constant STATE_DEFAULT = 0;
@@ -11,7 +12,7 @@ contract IPoolVar is Ownable {
   uint8 constant STATE_MONEY_BACK = 3;
   uint8 constant STATE_TOKEN_DISTRIBUTION = 4;
   uint8 constant STATE_FUND_DEPRECATED = 0xFF;
-
+  uint256 constant DECIMAL_MULTIPLIER = 10**18;
   /**
   * @dev address of Pool manager
   */
@@ -229,25 +230,45 @@ contract IPool is PoolModifiers {
   function pay() public payable {
     uint256 _investorSum = investorSum[msg.sender];
     if (poolState() == STATE_RAISING) {
-      require(maximalFundSize >= totalAcceptedETH.add(msg.value));
-      poolManagerPortion += (msg.value.mul(percentPoolManager)).div(100);    
-      adminPortion += (msg.value.mul(percentAdmin)).div(100);    
-      icoManagerPortion += (msg.value.mul(percentIcoManager)).div(100);    
-      totalAcceptedETH = (totalAcceptedETH.add(msg.value)).sub((poolManagerPortion.add(adminPortion)).add(icoManagerPortion));
-      _investorSum = (_investorSum.add(msg.value)).sub((poolManagerPortion.add(adminPortion)).add(icoManagerPortion));
-      investorSum[msg.sender] = _investorSum;
-      emit Invest(msg.sender, this, msg.value);
+     acceptPayment_(_investorSum);
     }
     else if (poolState() == STATE_MONEY_BACK) {
+      sendBack_(msg.value, msg.sender);
       distributeETH_(msg.sender, _investorSum);
       emit MoneyBack(msg.sender, _investorSum);
     } 
     else if (poolState() == STATE_TOKEN_DISTRIBUTION) {
+      sendBack_(msg.value, msg.sender);
       distributeToken_(msg.sender, getTokenBalance_(msg.sender));
       distributeETH_(msg.sender, getETHBalance_(msg.sender));
       emit ETHTransfer(this, msg.sender, _investorSum);
     }
 
+  }
+
+    /**
+  * @dev will accept payment from investor if it's rasing period 
+  * @param _value amount of ETH that was taken from investor
+  */
+  function acceptPayment_(uint256 _value) private state(STATE_RAISING) returns (bool) {
+    require(maximalFundSize >= totalAcceptedETH.add(_value));
+    poolManagerPortion += (_value.mul(percentPoolManager)).div(DECIMAL_MULTIPLIER);    
+    adminPortion += (_value.mul(percentAdmin)).div(DECIMAL_MULTIPLIER);    
+    icoManagerPortion += (_value.mul(percentIcoManager)).div(DECIMAL_MULTIPLIER);    
+    totalAcceptedETH = (totalAcceptedETH.add(_value)).sub((poolManagerPortion.add(adminPortion)).add(icoManagerPortion));
+    investorSum[msg.sender] = (investorSum[msg.sender].add(_value)).sub((poolManagerPortion.add(adminPortion)).add(icoManagerPortion));
+    emit Invest(msg.sender, this, _value);  
+    return true;
+  }
+  
+  /**
+  * @dev will accept payment from investor if it's rasing period 
+  * @param _value amount of ETH that was taken from investor
+  * @param _address who's address we need to send back 
+  */
+  function sendBack_(uint256 _value, address _address) private returns(bool) {
+    _address.transfer(_value);
+    return true;
   }
 
   /**
