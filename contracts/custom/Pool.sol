@@ -66,17 +66,17 @@ contract IPoolVar is Ownable {
   /**
   * @dev amount of time UNIX (period) for rasingTime
   */
-  uint256  public raisingPeriod;
+  uint256 public raisingPeriod;
 
   /**
   * @dev amount of time UNIX (period) for icoTime
   */
-  uint256  public waitingPeriod;
+  uint256 public waitingPeriod;
 
   /**
   * @dev amount of time UNIX (period) for fundDeprecatedTime
   */
-  uint256  public depricatedPeriod;
+  uint256 public depricatedPeriod;
   
   /**
   * @dev amount ETH which was accepted from investors - all portions (in ETH) of ICO manager, Pool manager, Admin
@@ -261,11 +261,11 @@ contract IPool is PoolModifiers {
   */
   function acceptPayment_(uint256 _value) private state(STATE_RAISING) returns(bool) {
     require(maximalFundSize >= totalAcceptedETH.add(_value));
-    poolManagerPortion += (_value.mul(percentPoolManager)).div(DECIMAL_MULTIPLIER);    
-    adminPortion += (_value.mul(percentAdmin)).div(DECIMAL_MULTIPLIER);    
-    icoManagerPortion += (_value.mul(percentIcoManager)).div(DECIMAL_MULTIPLIER);    
-    totalAcceptedETH = (totalAcceptedETH.add(_value)).sub((poolManagerPortion.add(adminPortion)).add(icoManagerPortion));
-    investorSum[msg.sender] = (investorSum[msg.sender].add(_value)).sub((poolManagerPortion.add(adminPortion)).add(icoManagerPortion));
+    poolManagerPortion = poolManagerPortion.add((_value.mul(percentPoolManager)).div(DECIMAL_MULTIPLIER));    
+    adminPortion = adminPortion.add((_value.mul(percentAdmin)).div(DECIMAL_MULTIPLIER));    
+    icoManagerPortion = icoManagerPortion.add((_value.mul(percentIcoManager)).div(DECIMAL_MULTIPLIER));    
+    totalAcceptedETH = (totalAcceptedETH.add(_value)).sub(((_value.mul(percentPoolManager)).div(DECIMAL_MULTIPLIER).add((_value.mul(percentAdmin)).div(DECIMAL_MULTIPLIER))).add((_value.mul(percentIcoManager)).div(DECIMAL_MULTIPLIER)));
+    investorSum[msg.sender] = (investorSum[msg.sender].add(_value)).sub(((_value.mul(percentPoolManager)).div(DECIMAL_MULTIPLIER).add((_value.mul(percentAdmin)).div(DECIMAL_MULTIPLIER))).add((_value.mul(percentIcoManager)).div(DECIMAL_MULTIPLIER)));
     emit Invest(msg.sender, this, _value);  
     return true;
   }
@@ -333,7 +333,7 @@ contract IPool is PoolModifiers {
   */
   function getAllowance_() internal returns(uint256) {
     ERC20 icoContract = ERC20(targetToken);
-    return icoContract.allowance(icoManager, this);;
+    return icoContract.allowance(icoManager, this);
   }
 
   /**

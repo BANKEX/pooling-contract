@@ -81,7 +81,7 @@ contract('Pool', (accounts) => {
         assert.equal(await pool.poolManager(), await pool.owner(), "pool manager address error 81");
 
         try { 
-            await pool.startRasing();
+            await pool.startRaising();
         } 
         catch (error) {
             console.log(error);
@@ -89,19 +89,21 @@ contract('Pool', (accounts) => {
        
         assert.equal(await pool.poolState(), 1, "state error 91");
 
-       
 
         for(let i = 2; i <= 9; i++) {
 
             try { 
-                await pool.pay({ value: (3e18/7), from: accounts[i]});
+                await pool.pay({ value: (1e17), from: accounts[i]});
             } 
             catch (error) {
                 console.log(error);
             }
-            console.log( (await pool.totalAcceptedETH()).toNumber() );
-
-            assert.notEqual(await pool.totalAcceptedETH(), , "balance error 101")
+            
+            let portions = (await pool.icoManagerPortion()).plus((await pool.poolManagerPortion()).plus(await pool.adminPortion()));
+            let totalpluport = (await pool.totalAcceptedETH()).plus(portions);
+            let bal = (await web3.eth.getBalance(pool.address));
+      
+            assert( (totalpluport).eq(bal), "balance error 101");
 
         }
 
