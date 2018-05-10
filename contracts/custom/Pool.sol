@@ -12,36 +12,119 @@ contract IPoolVar is Ownable {
   uint8 constant STATE_TOKENS_DISTRIBUTION = 4;
   uint8 constant STATE_FUND_DEPRECATED = 0xFF;
 
-
+  /**
+  * @dev address of Pool manager
+  */
   address public poolManager;
-  address public icoManager;
-  address public owner;
-  address public targetToken;
 
+  /**
+  * @dev address of ICO manager
+  */
+  address public icoManager;
+
+  /**
+  * @dev address of Admin BANKEX
+  */
+  address public owner;
+
+  /**
+  * @dev address of ICO ERC20 Token
+  */
+  address public targetToken;
+  
+  /**
+  * @dev minimal amount of ETH which investor can send to contract via payable function
+  */
   uint256 public minimalDeposit;
+
+  /**
+  * @dev minimal amount of ETH which allows to make ICO distribution
+  */
   uint256 public minimalFundSize;
+
+  /**
+  * @dev max amount of ETH which allows to make ICO distribution
+  */
   uint256 public maximalFundSize;
   
+  /**
+  * @dev amount of time UNIX which needed to make a raising for ICO (Deadline)
+  */
   uint256 public rasingTime;
+
+  /**
+  * @dev amount of time UNIX which needed to send tokens to investors and allow to send tokens to investor (Deadline)
+  */
   uint256 public icoTime;
+
+  /**
+  * @dev amount of time UNIX when fund will become depricated (Deadline)
+  */
   uint256 public fundDeprecatedTime;
   
+  /**
+  * @dev amount of time UNIX (period) for rasingTime
+  */
   uint256  public raisingPeriod;
+
+  /**
+  * @dev amount of time UNIX (period) for icoTime
+  */
   uint256  public waitingPeriod;
+
+  /**
+  * @dev amount of time UNIX (period) for fundDeprecatedTime
+  */
   uint256  public depricatedPeriod;
   
+  /**
+  * @dev amount ETH which was accepted from investors - all portions (in ETH) of ICO manager, Pool manager, Admin
+  */
   uint256 public totalAcceptedETH;
+
+  /**
+  * @dev amount ETH which ICO manager collected from fund balance
+  */
   uint256 internal collectedFundForTokens;
+
+  /**
+  * @dev amount of Tokens which Investor spend recently
+  */
   uint256 internal usedAllowance;
+  
+  /**
+  * @dev percent of collected sum which pool manager will receive
+  */
+  uint256 public PERCENT_POOL_MANAGER;
 
-  uint256  public PERCENT_POOL_MANAGER;
-  uint256  public PERCENT_ADMIN;
-  uint256  public PERCENT_ICO_MANAGER;
+  /**
+  * @dev percent of collected sum which admin will receive
+  */
+  uint256 public PERCENT_ADMIN;
 
+  /**
+  * @dev percent of collected sum which ico manager will receive
+  */
+  uint256 public PERCENT_ICO_MANAGER;
+  
+  /**
+  * @dev amount of ETH which is portion of poolManager from fund's collected amount
+  */
   uint256 public poolManagerPortion;
-  uint256 public adminPortion;
-  uint256 public icoManagerPortion;
 
+  /**
+  * @dev amount of ETH which is portion of admin from fund's collected amount
+  */
+  uint256 public adminPortion;
+
+  /**
+  * @dev amount of ETH which is portion of icoManager from fund's collected amount
+  */
+  uint256 public icoManagerPortion;
+  
+  /**
+  * @dev state that stateholders can change if they want to begin next state before deadline time
+  */
   uint8 internal settedPoolState;
   // uint256 public icoTimeout;
 
