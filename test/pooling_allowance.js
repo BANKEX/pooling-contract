@@ -12,6 +12,9 @@ contract('Pool', (accounts) => {
        
     // });
 
+
+    //setManager()
+
     it("shouldn't allow to set ICO manager from not contract owner, admin of pool is accounts[0], ICO manager is accounts[1]", async function() {
         
         let mnt = await MintableToken.new({from: accounts[1]});
@@ -42,6 +45,8 @@ contract('Pool', (accounts) => {
         }
 
     })
+
+    //setManager() && setTargetToken()
     
     it("should allow to set target token by ICO manager", async function() {
 
@@ -61,6 +66,12 @@ contract('Pool', (accounts) => {
         assert.equal(await pool.targetToken(), mnt.address, "targetToken error")
 
 
+    })
+
+    //payable function
+
+    it("should allow anybody to send eth and become an investor", async function(){
+        
     })
 
 })
