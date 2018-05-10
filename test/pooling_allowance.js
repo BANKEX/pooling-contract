@@ -21,27 +21,27 @@ contract('Pool', (accounts) => {
         let pool = await Pool.new({from: accounts[0]});
 
         try { 
-            await pool.setManager(accounts[1], { from: accounts[2] })
+            await pool.setManager(accounts[1], { from: accounts[2] });
         } 
         catch (error) {}
 
-        assert.notEqual(await pool.icoManager(), accounts[1], "ico manager error when not equal");
+        assert.notEqual(await pool.icoManager(), accounts[1], "ico manager error when not equal 28");
 
         try { 
-            await pool.setManager(accounts[1], { from: accounts[0] })
+            await pool.setManager(accounts[1], { from: accounts[0] });
         } 
         catch (error) {
             console.log(error);  
         }
 
-        assert.equal(await pool.owner(), accounts[0], "pooling owner error");
-        assert.equal(await mnt.owner(), accounts[1], "mnt owner error");
-        assert.equal(await pool.icoManager(), accounts[1], "ico manager error");
+        assert.equal(await pool.owner(), accounts[0], "pooling owner error 37");
+        assert.equal(await mnt.owner(), accounts[1], "mnt owner error 38");
+        assert.equal(await pool.icoManager(), accounts[1], "ico manager error 39");
 
         for (let i = 2; i < 9; i++) {
-            assert.notEqual((await pool.owner(), accounts[i], "pooling owner error"));
-            assert.notEqual(await mnt.owner(), accounts[i], "mnt owner error");
-            assert.notEqual(await pool.icoManager(), accounts[i], "ico manager error");
+            assert.notEqual((await pool.owner(), accounts[i], "pooling owner error 42"));
+            assert.notEqual(await mnt.owner(), accounts[i], "mnt owner error 43");
+            assert.notEqual(await pool.icoManager(), accounts[i], "ico manager error 44");
         }
 
     })
@@ -54,24 +54,59 @@ contract('Pool', (accounts) => {
         let pool = await Pool.new({from: accounts[0]});
 
         try { 
-            await pool.setManager(accounts[1], { from: accounts[0] })
+            await pool.setManager(accounts[1], { from: accounts[0] });
         } 
         catch (error) {}
 
         try { 
-            await pool.setTargetToken(mnt.address, { from: accounts[1] })
+            await pool.setTargetToken(mnt.address, { from: accounts[0] });
         } 
         catch (error) {}
 
-        assert.equal(await pool.targetToken(), mnt.address, "targetToken error")
+        assert.equal(await pool.targetToken(), mnt.address, "targetToken error 66");
 
 
     })
 
-    //payable function
+    //allow pool manager to set raising peroid
 
     it("should allow anybody to send eth and become an investor", async function(){
         
+        let mnt = await MintableToken.new({from: accounts[1]});
+        let pool = await Pool.new({from: accounts[0]});
+
+        await pool.setManager(accounts[1], { from: accounts[0] });
+        await pool.setTargetToken(mnt.address, { from: accounts[0] });
+
+        assert.equal(await pool.poolManager(), await pool.owner(), "pool manager address error 81");
+
+        try { 
+            await pool.startRasing();
+        } 
+        catch (error) {
+            console.log(error);
+        }
+       
+        assert.equal(await pool.poolState(), 1, "state error 91");
+
+       
+
+        for(let i = 2; i <= 9; i++) {
+
+            try { 
+                await pool.pay({ value: (3e18/7), from: accounts[i]});
+            } 
+            catch (error) {
+                console.log(error);
+            }
+            console.log( (await pool.totalAcceptedETH()).toNumber() );
+
+            assert.notEqual(await pool.totalAcceptedETH(), , "balance error 101")
+
+        }
+
+
+
     })
 
 })
