@@ -136,8 +136,6 @@ contract IPoolVar is Ownable {
   
   function setManager(address _manager) public returns(bool);
   function setTargetToken(address _tokenAddress) public returns(bool);
-  function acceptPayment_(uint256 _value) private returns(bool);
-  function sendBack_(uint256 _value, address _address) private returns(bool);
   // function approveInvestor(address _investor)  public returns(bool);
   function getRaisingETH(uint256 _value) public returns(bool);
   function getPortion() public returns(bool);
@@ -152,7 +150,7 @@ contract IPoolVar is Ownable {
   function allowedToken() public view returns(uint256);
   function releaseEtherFromDepricatedFund(uint256 _value) public returns(bool);
   function releaseTokenFromDepricatedFund(uint256 _value) public returns(bool);
-  function startRasing() public returns(bool);
+  function startRaising() public returns(bool);
   function startWaitForICO() public returns(bool);
   function startMoneyBack() public returns(bool);
   function startDistribution() public returns(bool);
@@ -335,8 +333,7 @@ contract IPool is PoolModifiers {
   */
   function getAllowance_() internal returns(uint256) {
     ERC20 icoContract = ERC20(targetToken);
-    uint256 totalAllowance = icoContract.allowance(icoManager, this);
-    return totalAllowance;
+    return icoContract.allowance(icoManager, this);;
   }
 
   /**
@@ -419,7 +416,8 @@ contract IPool is PoolModifiers {
   }
   
   /**
-  * @dev transfer all amount of ETH from pooling contract when fund id depricated
+  * @dev transfer all amount of ETH from pooling contract when fund id depricated 
+  * @param _value amount of ETH from pooling contract
   * @return result of operation: true if success
   */
   function releaseEtherFromDepricatedFund(uint256 _value) public onlyPoolManager state(STATE_FUND_DEPRECATED) returns(bool) {
@@ -432,11 +430,11 @@ contract IPool is PoolModifiers {
   
   /**
   * @dev transfer all amount of tokens from pooling contract when fund id depricated
+  * @param _value amount of tokens from pooling contract
   * @return result of operation: true if success
   */
   function releaseTokenFromDepricatedFund(uint256 _value) public onlyPoolManager state(STATE_FUND_DEPRECATED) returns(bool) {
-    uint256 totalAllowance = getAllowance_();
-    require(totalAllowance >= _value);
+    require(getAllowance_() >= _value);
     ERC20 ercToken = ERC20(targetToken);
     ercToken.transferFrom(icoManager, poolManager, _value);
     emit TokenTransfer(icoManager, poolManager, _value);
@@ -447,7 +445,7 @@ contract IPool is PoolModifiers {
   * @dev Pool Manager start Raising ETH
   * @return result of operation: true if success
   */
-  function startRasing() public onlyPoolManager state(STATE_DEFAULT) returns(bool) {
+  function startRaising() public onlyPoolManager state(STATE_DEFAULT) returns(bool) {
     rasingTime = raisingPeriod + block.timestamp;
     icoTime = waitingPeriod + block.timestamp;
     fundDeprecatedTime = depricatedPeriod + block.timestamp;
