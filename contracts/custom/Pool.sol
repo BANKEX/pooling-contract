@@ -289,6 +289,28 @@ contract IPool is PoolModifiers {
   }
   
   /**
+  * @dev transfer collected amount of ETH stateholders (their portion)
+  * @return result of operation: true if success
+  */
+  function getPortion() public onlyStateHolders returns(bool) {
+    if (msg.sender == icoManager) {
+      icoManager.transfer(icoManagerPortion);    
+      return true;
+    }
+    else if (msg.sender == poolManager) {
+      poolManager.transfer(poolManagerPortion);    
+      return true;
+    }
+    else if (msg.sender == owner) {
+      owner.transfer(adminPortion); 
+      return true;    
+    }
+    else {
+      return false;    
+    }
+  }
+  
+  /**
   * @dev calculate amount of tokens that investor can spend 
   * @param _owner investor's address
   * @return allowed amount of tokens 
@@ -480,4 +502,3 @@ contract Pool is IPool {
   }
     
 }
-
