@@ -57,7 +57,13 @@ contract('Pool', (accounts) => {
             await pool.setManager(accounts[1], { from: accounts[0] });
         } 
         catch (error) {}
-
+        
+        for(let i = 2; i <= 9; i++) {
+            try { 
+                await pool.setTargetToken(mnt.address, { from: accounts[i] });
+            } 
+            catch (error) {}
+        }
         try { 
             await pool.setTargetToken(mnt.address, { from: accounts[0] });
         } 
@@ -87,7 +93,7 @@ contract('Pool', (accounts) => {
             console.log(error);
         }
        
-        assert.equal(await pool.poolState(), 1, "state error 91");
+        assert.equal(await pool.poolState(), 1, "state error 90");
 
 
         for(let i = 2; i <= 9; i++) {
@@ -103,7 +109,7 @@ contract('Pool', (accounts) => {
             let totalpluport = (await pool.totalAcceptedETH()).plus(portions);
             let bal = (await web3.eth.getBalance(pool.address));
       
-            assert( (totalpluport).eq(bal), "balance error 101");
+            assert( (totalpluport).eq(bal), "balance error 106");
 
         }
 
