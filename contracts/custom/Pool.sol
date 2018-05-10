@@ -133,19 +133,19 @@ contract IPoolVar is Ownable {
   mapping (address => uint256) internal receivedToken;
   mapping (address => uint256) internal receivedETH;
   
-  function setManager(address _manager) public returns(bool);
-  function setTargetToken(address _tokenAddress) public returns(bool);
-  // function moneyBack(uint256 _value) public returns(bool);
-  // function approveInvestor(address _investor)  public returns(bool);
-  function getRaisingETH(uint256 _value) public returns(bool);
-  // function investorTokenBalance() public view returns(uint256);
-  // function investorETHBalance() public view returns(uint256);
-  function releaseInterest(uint256 _value) public returns(bool);
-  function allowedToken() public view returns(uint256);
-  function releaseEtherFromDepricatedFund(uint256 _value) public returns(bool);
-  function releaseTokenFromDepricatedFund(uint256 _value) public returns(bool);
+//   function setManager(address _manager) public returns(bool);
+//   function setTargetToken(address _tokenAddress) public returns(bool);
+//   // function moneyBack(uint256 _value) public returns(bool);
+//   // function approveInvestor(address _investor)  public returns(bool);
+//   function getRaisingETH(uint256 _value) public returns(bool);
+// //   function investorTokenBalance() public view returns(uint256);
+// //   function investorETHBalance() public view returns(uint256);
+//   function releaseInterest(uint256 _value) public returns(bool);
+//   function allowedToken() public view returns(uint256);
+//   function releaseEtherFromDepricatedFund(uint256 _value) public returns(bool);
+//   function releaseTokenFromDepricatedFund(uint256 _value) public returns(bool);
   function poolState_() internal view returns(uint8);
-  function poolState() public view returns(uint8);
+//   function poolState() public view returns(uint8);
 
   event MoneyBack(address indexed to, uint256 value);
   event TransferToIcoManager(address indexed from, address indexed to, uint256 value);
