@@ -12,7 +12,7 @@ contract IPoolVar is Ownable {
   uint8 constant STATE_MONEY_BACK = 3;
   uint8 constant STATE_TOKEN_DISTRIBUTION = 4;
   uint8 constant STATE_FUND_DEPRECATED = 0xFF;
-  uint256 constant DECIMAL_MULTIPLIER = 10**18;
+  uint256 constant DECIMAL_MULTIPLIER = 10**2;
   /**
   * @dev address of Pool manager
   */
@@ -230,7 +230,7 @@ contract IPool is PoolModifiers {
   function pay() public payable {
     uint256 _investorSum = investorSum[msg.sender];
     if (poolState() == STATE_RAISING) {
-     acceptPayment_(_investorSum);
+     acceptPayment_(msg.value);
     }
     else if (poolState() == STATE_MONEY_BACK) {
       sendBack_(msg.value, msg.sender);
