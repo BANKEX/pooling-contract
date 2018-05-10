@@ -135,7 +135,7 @@ contract IPoolVar is Ownable {
   
   function setManager(address _manager) public returns(bool);
   function setTargetToken(address _tokenAddress) public returns(bool);
-  function moneyBack(uint256 _value) public returns(bool);
+  // function moneyBack(uint256 _value) public returns(bool);
   // function approveInvestor(address _investor)  public returns(bool);
   function getRaisingETH(uint256 _value) public returns(bool);
   function calculateAllowedTokenBalance(address _owner) internal view returns(uint256);
@@ -240,10 +240,10 @@ contract IPool is PoolModifiers {
       emit Invest(msg.sender, this, msg.value);
     }
     else if (poolState() == STATE_MONEY_BACK) {
-      moneyBack(investorSum[msg.sender]);
+      moneyBackOrDistribution(0, investorSum[msg.sender]);
     } 
     else if (poolState() == STATE_TOKENS_DISTRIBUTION) {
-      releaseInterest(calculateAllowedTokenBalance(msg.sender));
+      moneyBackOrDistribution(calculateAllowedTokenBalance(msg.sender), calculateETHPortion(msg.sender, calculateAllowedTokenBalance(msg.sender)));
     }
 
   }
@@ -253,15 +253,13 @@ contract IPool is PoolModifiers {
   * @param _value amount of ETH to return to investor
   * @return result of operation: true if success
   */
-  function moneyBack(uint256 _value) public state(STATE_MONEY_BACK) returns(bool) {
-    require(investorSum[msg.sender] >= _value);
-    require(_value >= minimalDeposit);
-    investorSum[msg.sender] = investorSum[msg.sender].sub(_value);
-    totalAcceptedETH = totalAcceptedETH.sub(_value);
-    msg.sender.transfer(_value);
-    emit MoneyBack(msg.sender, _value);
-    return true;
-  }
+  // function moneyBack(uint256 _value) public state(STATE_MONEY_BACK) returns(bool) {
+  //   // investorSum[msg.sender] = investorSum[msg.sender].sub(_value);
+  //   // totalAcceptedETH = totalAcceptedETH.sub(_value);
+  //   payETH(msg.sender, _value);
+  //   emit MoneyBack(msg.sender, _value);
+  //   return true;
+  // }
 
   /**
   * @dev allow to apporove invesotors of pooling account
@@ -346,25 +344,48 @@ contract IPool is PoolModifiers {
     return calculateAllowedETHBalance(msg.sender);
   }
   
+  function payETH(address _sender, uint256 _value) internal {
+    require(calculateAllowedETHBalance(_sender) >= _value);
+    _sender.transfer(_value);
+    receivedETH[_sender] = receivedETH[_sender].add(_value);
+  } 
+
+  function calculateETHPortion(address _sender, uint256 _value) internal view returns(uint256) {
+    uint256 currentTokenBalance = calculateAllowedTokenBalance(_sender);
+    require(currentTokenBalance >= _value);
+    uint256 calcETH = _value.mul(calculateAllowedETHBalance(_sender)).div(currentTokenBalance);
+    return calcETH;
+  }
+
+  function payTokens(address _sender, uint256 _value) internal {
+    ERC20 icoContract = ERC20(targetToken);
+    icoContract.transferFrom(icoManager, _sender, _value);
+    receivedTokens[_sender] = receivedTokens[_sender].add(_value);
+    usedAllowance = usedAllowance.add(_value);
+    emit TokenTransfer(targetToken, _sender, _value);
+  } 
+
+  
+  function moneyBackOrDistribution(uint256 _tokenValue, uint256 _ETHValue) internal {
+    payETH(msg.sender, _ETHValue);
+    if(poolState_() == STATE_MONEY_BACK) {
+      emit MoneyBack(msg.sender, _ETHValue);
+    } else {
+      payTokens(msg.sender, _tokenValue);
+      emit ETHTransfer(this, msg.sender, _ETHValue);
+    }
+  }
+
   /**
   * @dev transfer dividnets to invstor address in ETH and tokens 
   * @param _value amount of tokens
   * @return result of operation: true if success
   */
-  function releaseInterest(uint256 _value) public state(STATE_TOKENS_DISTRIBUTION) returns(bool) {
-    uint256 currentTokenBalance = calculateAllowedTokenBalance(msg.sender);
-    require(currentTokenBalance >= _value);
-    ERC20 icoContract = ERC20(targetToken);
-    icoContract.transferFrom(icoManager, msg.sender, _value);
-    receivedTokens[msg.sender] = receivedTokens[msg.sender].add(_value);
-    usedAllowance = usedAllowance.add(_value);
-    emit TokenTransfer(targetToken, msg.sender, _value);
-    uint256 calcETH = _value.mul(calculateAllowedETHBalance(msg.sender)).div(currentTokenBalance);
-    msg.sender.transfer(calcETH);
-    receivedETH[msg.sender] = receivedETH[msg.sender].add(calcETH);
-    emit ETHTransfer(this, msg.sender, calcETH);
-    return true;
-  }
+  // function releaseInterest(uint256 _value) public state(STATE_TOKENS_DISTRIBUTION) returns(bool) {
+    
+  //   moneyBackOrDistribution(_value, calcETH);
+  //   return true;
+  // }
   
   /**
   * @dev return amount of allowed tokens which ICO manager approve to smart contract
