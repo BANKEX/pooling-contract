@@ -9,7 +9,7 @@ contract IPoolVar is Ownable {
   uint8 constant STATE_RAISING = 1;
   uint8 constant STATE_WAIT_FOR_ICO = 2;
   uint8 constant STATE_MONEY_BACK = 3;
-  uint8 constant STATE_TOKENS_DISTRIBUTION = 4;
+  uint8 constant STATE_TOKEN_DISTRIBUTION = 4;
   uint8 constant STATE_FUND_DEPRECATED = 0xFF;
 
   /**
@@ -85,10 +85,10 @@ contract IPoolVar is Ownable {
   /**
   * @dev amount ETH which ICO manager collected from fund balance
   */
-  uint256 internal collectedFundForTokens;
+  uint256 internal collectedFundForToken;
 
   /**
-  * @dev amount of Tokens which Investor spend recently
+  * @dev amount of Token which Investor spend recently
   */
   uint256 internal usedAllowance;
   
@@ -130,7 +130,7 @@ contract IPoolVar is Ownable {
 
   mapping (address => uint8) public approvedInvestors;
   mapping (address => uint256) internal investorSum;
-  mapping (address => uint256) internal receivedTokens;
+  mapping (address => uint256) internal receivedToken;
   mapping (address => uint256) internal receivedETH;
   
   function setManager(address _manager) public returns(bool);
@@ -138,14 +138,12 @@ contract IPoolVar is Ownable {
   // function moneyBack(uint256 _value) public returns(bool);
   // function approveInvestor(address _investor)  public returns(bool);
   function getRaisingETH(uint256 _value) public returns(bool);
-  function calculateAllowedTokenBalance(address _owner) internal view returns(uint256);
-  function calculateAllowedETHBalance(address _owner) internal view returns(uint256);
-  function investorTokenBalance() public view returns(uint256);
-  function investorETHBalance() public view returns(uint256);
+  // function investorTokenBalance() public view returns(uint256);
+  // function investorETHBalance() public view returns(uint256);
   function releaseInterest(uint256 _value) public returns(bool);
-  function allowedTokens() public view returns(uint256);
+  function allowedToken() public view returns(uint256);
   function releaseEtherFromDepricatedFund(uint256 _value) public returns(bool);
-  function releaseTokensFromDepricatedFund(uint256 _value) public returns(bool);
+  function releaseTokenFromDepricatedFund(uint256 _value) public returns(bool);
   function poolState_() internal view returns(uint8);
   function poolState() public view returns(uint8);
 
@@ -229,37 +227,28 @@ contract IPool is PoolModifiers {
   * @dev payable function to accept ETH from approved investors
   */
   function pay() public payable {
-
+    uint256 _investorSum = investorSum[msg.sender];
     if (poolState() == STATE_RAISING) {
       require(maximalFundSize >= totalAcceptedETH.add(msg.value));
       poolManagerPortion += (msg.value.mul(percentPoolManager)).div(100);    
       adminPortion += (msg.value.mul(percentAdmin)).div(100);    
       icoManagerPortion += (msg.value.mul(percentIcoManager)).div(100);    
       totalAcceptedETH = (totalAcceptedETH.add(msg.value)).sub((poolManagerPortion.add(adminPortion)).add(icoManagerPortion));
-      investorSum[msg.sender] = (investorSum[msg.sender].add(msg.value)).sub((poolManagerPortion.add(adminPortion)).add(icoManagerPortion));
+      _investorSum = (_investorSum.add(msg.value)).sub((poolManagerPortion.add(adminPortion)).add(icoManagerPortion));
+      investorSum[msg.sender] = _investorSum;
       emit Invest(msg.sender, this, msg.value);
     }
     else if (poolState() == STATE_MONEY_BACK) {
-      moneyBackOrDistribution(0, investorSum[msg.sender]);
+      distributeETH_(msg.sender, _investorSum);
+      emit MoneyBack(msg.sender, _investorSum);
     } 
-    else if (poolState() == STATE_TOKENS_DISTRIBUTION) {
-      moneyBackOrDistribution(calculateAllowedTokenBalance(msg.sender), calculateETHPortion(msg.sender, calculateAllowedTokenBalance(msg.sender)));
+    else if (poolState() == STATE_TOKEN_DISTRIBUTION) {
+      distributeToken_(msg.sender, getTokenBalance_(msg.sender));
+      distributeETH_(msg.sender, getETHBalance_(msg.sender));
+      emit ETHTransfer(this, msg.sender, _investorSum);
     }
 
   }
-
-  /**
-  * @dev investors can return their dividents by using this function 
-  * @param _value amount of ETH to return to investor
-  * @return result of operation: true if success
-  */
-  // function moneyBack(uint256 _value) public state(STATE_MONEY_BACK) returns(bool) {
-  //   // investorSum[msg.sender] = investorSum[msg.sender].sub(_value);
-  //   // totalAcceptedETH = totalAcceptedETH.sub(_value);
-  //   payETH(msg.sender, _value);
-  //   emit MoneyBack(msg.sender, _value);
-  //   return true;
-  // }
 
   /**
   * @dev allow to apporove invesotors of pooling account
@@ -281,7 +270,7 @@ contract IPool is PoolModifiers {
     require(totalAcceptedETH >= _value);
     totalAcceptedETH = totalAcceptedETH.sub(_value);
     icoManager.transfer(_value);
-    collectedFundForTokens = collectedFundForTokens.add(_value);
+    collectedFundForToken = collectedFundForToken.add(_value);
     emit TransferToIcoManager(targetToken, icoManager, _value);
     return true;
   }
@@ -313,10 +302,10 @@ contract IPool is PoolModifiers {
   * @param _owner investor's address
   * @return allowed amount of tokens 
   */
-  function calculateAllowedTokenBalance(address _owner) internal view returns(uint256) {
+  function getTokenBalance_(address _owner) internal view returns(uint256) {
     ERC20 icoContract = ERC20(targetToken);
     uint256 totalAllowance = icoContract.allowance(icoManager, this);
-    return (investorSum[_owner].mul(totalAllowance.add(usedAllowance)).div(totalAcceptedETH.add(collectedFundForTokens))).sub(receivedTokens[_owner]);
+    return (investorSum[_owner].mul(totalAllowance.add(usedAllowance)).div(totalAcceptedETH.add(collectedFundForToken))).sub(receivedToken[_owner]);
   }
   
   /**
@@ -324,74 +313,58 @@ contract IPool is PoolModifiers {
   * @param _owner investor's address
   * @return allowed amount of ETH 
   */
-  function calculateAllowedETHBalance(address _owner) internal view returns(uint256) {
-    return (investorSum[_owner].mul(totalAcceptedETH).div(totalAcceptedETH.add(collectedFundForTokens))).sub(receivedETH[_owner]);
+  function getETHBalance_(address _owner) internal view returns(uint256) {
+    return (investorSum[_owner].mul(totalAcceptedETH).div(totalAcceptedETH.add(collectedFundForToken))).sub(receivedETH[_owner]);
   }
   
   /**
   * @dev returns amount of tokens on invesotr's balance
   * @return amount of tokens
   */
-  function investorTokenBalance() public view returns(uint256) {
-    return calculateAllowedTokenBalance(msg.sender);
+  function getTokenBalance() external view returns(uint256) {
+    return getTokenBalance_(msg.sender);
   }
   
   /**
   * @dev returns amount of ETH on invesotr's balance
   * @return amount of ETH
   */
-  function investorETHBalance() public view returns(uint256) {
-    return calculateAllowedETHBalance(msg.sender);
+  function getETHBalance() external view returns(uint256) {
+    return getETHBalance_(msg.sender);
   }
   
-  function payETH(address _sender, uint256 _value) internal {
-    require(calculateAllowedETHBalance(_sender) >= _value);
+  function distributeETH_(address _sender, uint256 _value) internal {
+    require(getETHBalance_(_sender) >= _value);
     _sender.transfer(_value);
     receivedETH[_sender] = receivedETH[_sender].add(_value);
   } 
 
-  function calculateETHPortion(address _sender, uint256 _value) internal view returns(uint256) {
-    uint256 currentTokenBalance = calculateAllowedTokenBalance(_sender);
-    require(currentTokenBalance >= _value);
-    uint256 calcETH = _value.mul(calculateAllowedETHBalance(_sender)).div(currentTokenBalance);
-    return calcETH;
-  }
+  // function getETHPortion_(address _sender, uint256 _value) internal view returns(uint256) {
+  //   uint256 currentTokenBalance = calculateAllowedTokenBalance(_sender);
+  //   require(currentTokenBalance >= _value);
+  //   uint256 calcETH = _value.mul(calculateAllowedETHBalance(_sender)).div(currentTokenBalance);
+  //   return calcETH;
+  // }
 
-  function payTokens(address _sender, uint256 _value) internal {
+  function distributeToken_(address _sender, uint256 _value) internal {
     ERC20 icoContract = ERC20(targetToken);
     icoContract.transferFrom(icoManager, _sender, _value);
-    receivedTokens[_sender] = receivedTokens[_sender].add(_value);
+    receivedToken[_sender] = receivedToken[_sender].add(_value);
     usedAllowance = usedAllowance.add(_value);
     emit TokenTransfer(targetToken, _sender, _value);
   } 
 
-  
-  function moneyBackOrDistribution(uint256 _tokenValue, uint256 _ETHValue) internal {
-    payETH(msg.sender, _ETHValue);
-    if(poolState_() == STATE_MONEY_BACK) {
-      emit MoneyBack(msg.sender, _ETHValue);
-    } else {
-      payTokens(msg.sender, _tokenValue);
-      emit ETHTransfer(this, msg.sender, _ETHValue);
-    }
+  function releaseInterest(uint256 _tokeValue, uint256 _ETHValue) external returns(bool) {
+    distributeToken_(msg.sender, _tokeValue);
+    distributeETH_(msg.sender, _ETHValue);
+    return true;
   }
-
-  /**
-  * @dev transfer dividnets to invstor address in ETH and tokens 
-  * @param _value amount of tokens
-  * @return result of operation: true if success
-  */
-  // function releaseInterest(uint256 _value) public state(STATE_TOKENS_DISTRIBUTION) returns(bool) {
-    
-  //   moneyBackOrDistribution(_value, calcETH);
-  //   return true;
-  // }
   
   /**
   * @dev return amount of allowed tokens which ICO manager approve to smart contract
   * @return amount of tokens
   */
-  function allowedTokens() public view onlyPoolManager returns(uint256) {
+  function allowedToken() public view onlyPoolManager returns(uint256) {
     ERC20 ercToken = ERC20(targetToken);
     return ercToken.allowance(icoManager, this);
   }
@@ -412,7 +385,7 @@ contract IPool is PoolModifiers {
   * @dev transfer all amount of tokens from pooling contract when fund id depricated
   * @return result of operation: true if success
   */
-  function releaseTokensFromDepricatedFund(uint256 _value) public onlyPoolManager state(STATE_FUND_DEPRECATED) returns(bool) {
+  function releaseTokenFromDepricatedFund(uint256 _value) public onlyPoolManager state(STATE_FUND_DEPRECATED) returns(bool) {
     ERC20 ercToken = ERC20(targetToken);
     uint256 totalAllowance = ercToken.allowance(icoManager, this);
     require(totalAllowance >= _value);
@@ -458,7 +431,7 @@ contract IPool is PoolModifiers {
   * @return result of operation: true if success
   */
   function startDistribution() public onlyStateHolders state(STATE_WAIT_FOR_ICO) returns(bool) {
-    settedPoolState = STATE_TOKENS_DISTRIBUTION;
+    settedPoolState = STATE_TOKEN_DISTRIBUTION;
     return true;
   }
   
@@ -470,15 +443,15 @@ contract IPool is PoolModifiers {
     if(settedPoolState == STATE_RAISING && rasingTime == 0 || settedPoolState == STATE_RAISING && block.timestamp <= rasingTime ) {
       return STATE_RAISING;
     } 
-    else if( (settedPoolState == STATE_WAIT_FOR_ICO && block.timestamp <= rasingTime && totalAcceptedETH.add(collectedFundForTokens) >= minimalFundSize) || (block.timestamp >= raisingPeriod && totalAcceptedETH.add(collectedFundForTokens) >= minimalFundSize && block.timestamp <= icoTime)  ) {
+    else if( (settedPoolState == STATE_WAIT_FOR_ICO && block.timestamp <= rasingTime && totalAcceptedETH.add(collectedFundForToken) >= minimalFundSize) || (block.timestamp >= raisingPeriod && totalAcceptedETH.add(collectedFundForToken) >= minimalFundSize && block.timestamp <= icoTime)  ) {
       return STATE_WAIT_FOR_ICO;
     } 
-    else if( (block.timestamp >= icoTime && block.timestamp <= fundDeprecatedTime) || (settedPoolState == STATE_MONEY_BACK) || (settedPoolState == STATE_TOKENS_DISTRIBUTION) ) {
-      if ( ( minimalFundSize > totalAcceptedETH.add(collectedFundForTokens) ) || (settedPoolState == STATE_MONEY_BACK) ) {
+    else if( (block.timestamp >= icoTime && block.timestamp <= fundDeprecatedTime) || (settedPoolState == STATE_MONEY_BACK) || (settedPoolState == STATE_TOKEN_DISTRIBUTION) ) {
+      if ( ( minimalFundSize > totalAcceptedETH.add(collectedFundForToken) ) || (settedPoolState == STATE_MONEY_BACK) ) {
         return STATE_MONEY_BACK;
       } 
-      else if (settedPoolState == STATE_TOKENS_DISTRIBUTION || block.timestamp >= icoTime ){
-        return STATE_TOKENS_DISTRIBUTION;
+      else if (settedPoolState == STATE_TOKEN_DISTRIBUTION || block.timestamp >= icoTime ){
+        return STATE_TOKEN_DISTRIBUTION;
       }
     } 
     else if(block.timestamp >= fundDeprecatedTime && fundDeprecatedTime != 0) {
