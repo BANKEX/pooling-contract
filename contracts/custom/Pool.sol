@@ -134,7 +134,8 @@ contract IPoolVar is Ownable {
   mapping (address => uint256) internal receivedToken;
   mapping (address => uint256) internal receivedETH;
   
-  function setManager(address _manager) public returns(bool);
+  function setICOManager(address _manager) public returns(bool);
+  function setPoolManager(address _manager) public returns(bool);
   function setTargetToken(address _tokenAddress) public returns(bool);
   // function approveInvestor(address _investor)  public returns(bool);
   function getRaisingETH(uint256 _value) public returns(bool);
