@@ -223,8 +223,18 @@ contract IPool is PoolModifiers {
   * @param _manager of ICO manager
   * @return result of operation: true if success
   */
-  function setManager(address _manager) public onlyOwner state(STATE_DEFAULT) returns(bool) {
+  function setICOManager(address _manager) public onlyOwner state(STATE_DEFAULT) returns(bool) {
     icoManager = _manager;
+    return true;
+  }
+
+  /**
+  * @dev set Pool manager
+  * @param _manager of Pool manager
+  * @return result of operation: true if success
+  */
+  function setPoolManager(address _manager) public onlyOwner state(STATE_DEFAULT) returns(bool) {
+    poolManager = _manager;
     return true;
   }
   
