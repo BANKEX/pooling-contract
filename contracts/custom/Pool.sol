@@ -176,6 +176,11 @@ contract PoolModifiers is IPoolVar {
   //   require(approvedInvestors[msg.sender] == 1);
   //   _;
   // }
+
+  modifier moneyBackOrStateDist() {
+    require(poolState_() == STATE_MONEY_BACK || poolState_() == STATE_TOKEN_DISTRIBUTION);
+    _;
+  }
     
   modifier onlyIcoManager() {
     require(icoManager == msg.sender);
@@ -375,7 +380,7 @@ contract IPool is PoolModifiers {
   * @param _receiver eth receiver
   * @param _value value
   */
-  function distributeETH_(address _receiver, uint256 _value) internal {
+  function distributeETH_(address _receiver, uint256 _value) moneyBackOrStateDist() internal {
     require(getETHBalance_(_receiver) >= _value);
     _receiver.transfer(_value);
     receivedETH[_receiver] = receivedETH[_receiver].add(_value);
@@ -386,7 +391,7 @@ contract IPool is PoolModifiers {
   * @param _receiver tokens receiver
   * @param _value value
   */
-  function distributeToken_(address _receiver, uint256 _value) internal {
+  function distributeToken_(address _receiver, uint256 _value) moneyBackOrStateDist() internal {
     require(getTokenBalance_(_receiver) >= _value);
     ERC20 ercToken = ERC20(targetToken);
     ercToken.transferFrom(icoManager, _receiver, _value);
