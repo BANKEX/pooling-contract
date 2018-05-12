@@ -21,14 +21,14 @@ contract('Pool', (accounts) => {
         let pool = await Pool.new({from: accounts[0]});
 
         try { 
-            await pool.setManager(accounts[1], { from: accounts[2] });
+            await pool.setICOManager(accounts[1], { from: accounts[2] });
         } 
         catch (error) {}
 
         assert.notEqual(await pool.icoManager(), accounts[1], "ico manager error when not equal 28");
 
         try { 
-            await pool.setManager(accounts[1], { from: accounts[0] });
+            await pool.setICOManager(accounts[1], { from: accounts[0] });
         } 
         catch (error) {
             console.log(error);  
@@ -54,7 +54,7 @@ contract('Pool', (accounts) => {
         let pool = await Pool.new({from: accounts[0]});
 
         try { 
-            await pool.setManager(accounts[1], { from: accounts[0] });
+            await pool.setICOManager(accounts[1], { from: accounts[0] });
         } 
         catch (error) {}
         
@@ -69,7 +69,7 @@ contract('Pool', (accounts) => {
         } 
         catch (error) {}
 
-        assert.equal(await pool.targetToken(), mnt.address, "targetToken error 66");
+        assert.equal(await pool.targetToken(), mnt.address, "targetToken error 72");
 
 
     })
@@ -81,10 +81,10 @@ contract('Pool', (accounts) => {
         let mnt = await MintableToken.new({from: accounts[1]});
         let pool = await Pool.new({from: accounts[0]});
 
-        await pool.setManager(accounts[1], { from: accounts[0] });
+        await pool.setICOManager(accounts[1], { from: accounts[0] });
         await pool.setTargetToken(mnt.address, { from: accounts[0] });
 
-        assert.equal(await pool.poolManager(), await pool.owner(), "pool manager address error 81");
+        assert.equal(await pool.poolManager(), await pool.owner(), "pool manager address error 87");
 
         try { 
             await pool.startRaising();
@@ -93,13 +93,18 @@ contract('Pool', (accounts) => {
             console.log(error);
         }
        
-        assert.equal(await pool.poolState(), 1, "state error 90");
+        assert.equal(await pool.poolState(), 1, "state error 96");
+
+        
 
 
         for(let i = 2; i <= 9; i++) {
 
+            let sum = tw(0.1);
+
+
             try { 
-                await pool.pay({ value: (1e17), from: accounts[i]});
+                await pool.pay({ value: (sum), from: accounts[i]});
             } 
             catch (error) {
                 console.log(error);
@@ -108,10 +113,30 @@ contract('Pool', (accounts) => {
             let portions = (await pool.icoManagerPortion()).plus((await pool.poolManagerPortion()).plus(await pool.adminPortion()));
             let totalpluport = (await pool.totalAcceptedETH()).plus(portions);
             let bal = (await web3.eth.getBalance(pool.address));
-      
-            assert( (totalpluport).eq(bal), "balance error 106");
 
+            let invBal = (await pool.investorSum([accounts[i]]));
+
+            let percentParPoolMng = (await pool.percentPoolManager());
+            let percentParICOMng = (await pool.percentIcoManager());
+            let percentParAdmin = (await pool.percentAdmin());
+
+            let fixedPartPoolMng = (percentParPoolMng).mul(sum);
+            let fixedPartIcoMng = (percentParICOMng).mul(sum);
+            let fixedprtAdmin = (percentParAdmin).mul(sum);
+
+            let allPrtsFixed = ((fixedPartPoolMng).plus((fixedPartIcoMng).plus(fixedprtAdmin)))/100;
+
+            // console.log(invBal.toString());
+            // console.log(((sum).minus(allPrtsFixed)).toString());
+            // console.log((portions).toString());
+
+            assert( (invBal).eq( (sum).minus(allPrtsFixed) ), "investor's balance error" );
+            assert( (totalpluport).eq(bal), "balance error 135");
+
+            
         }
+
+
 
 
 

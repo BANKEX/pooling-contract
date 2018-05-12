@@ -130,7 +130,12 @@ contract IPoolVar is Ownable {
   // uint256 public icoTimeout;
 
   mapping (address => uint8) public approvedInvestors;
-  mapping (address => uint256) internal investorSum;
+  
+  /**
+  * @dev must be internal later!!!!
+  */
+  mapping (address => uint256) public investorSum;
+
   mapping (address => uint256) internal receivedToken;
   mapping (address => uint256) internal receivedETH;
   
