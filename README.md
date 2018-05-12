@@ -8,8 +8,8 @@
 
 4) Mixed tests - @nk
 
-5) Normal cycle test (all function just are working properly) - @krboktv
+5) Normal cycle test (all function just are working properly) - @kk
 
-6) Full-cycle test (with investors, ico, pool, token and e.t.c) - @krboktv
+6) Full-cycle test (with investors, ico, pool, token and e.t.c) - @kk
 
 
