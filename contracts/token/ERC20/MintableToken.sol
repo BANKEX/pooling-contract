@@ -22,6 +22,11 @@ contract MintableToken is StandardToken, Ownable {
     _;
   }
 
+  constructor() public {
+    owner = msg.sender;
+    balances[msg.sender] = totalSupply_;
+  }
+
   /**
    * @dev Function to mint tokens
    * @param _to The address that will receive the minted tokens.
