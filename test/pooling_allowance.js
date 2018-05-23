@@ -256,10 +256,10 @@ contract('Pool', (accounts) => {
 
 
     })
+    
+    it('should allow all ivestors to return money back from smart contract after STATE money back', async function() {
 
-    it("should allow all ivestors to return money back from smart contract after STATE money back", async function() {
         const gasPrice = tw("3e-7");
-        // two new contracts and pool mng ico mng token target init
         let mnt = await MintableToken.new({from: accounts[1]});
         let pool = await Pool.new({from: accounts[0]});
         await pool.setICOManager(accounts[1], { from: accounts[0], gasPrice: gasPrice });
@@ -267,116 +267,94 @@ contract('Pool', (accounts) => {
         await pool.setTargetToken(mnt.address, { from: accounts[0], gasPrice: gasPrice });
         assert.equal(await pool.poolManager(), accounts[2], "pool manager address error ");
         await pool.startRaising({from: accounts[2], gasPrice: gasPrice});
+
         assert.equal(await pool.poolState(), 1, "state error ");
-         // two new contracts and pool mng ico mng token target init
-
-        var investorsBalanceBeforePay = [];
-        investorsBalanceBeforePay.push(0);
-        investorsBalanceBeforePay.push(0);
-        investorsBalanceBeforePay.push(0);
         
-
-        var gasweiTx;
         
-   
+        // 7 accounts
+
+        let bBefore = []; // balances before rasing
+
+        let bAfterFirst = []; // balances before moneyback after rasing
+
+        let bAfterSecond = []; // balances after money back
+
+        let txsOne = []; // amount of gas for first pay
+
+        let txsTwo = []; // amount of gas for second pay
+
+        let feeOne = []; // fee for first pay
+
+        let feeTwo = []; // fee for second pay
+
+        let sum = tw(0.2); // sum for pay
+
+        // fast solution
+        bBefore.push(0);
+        bBefore.push(0);
+        bBefore.push(0);
+        bAfterFirst.push(0);
+        bAfterFirst.push(0);
+        bAfterFirst.push(0);
+        bAfterSecond.push(0);
+        bAfterSecond.push(0);
+        bAfterSecond.push(0);
+        txsOne.push(0);
+        txsOne.push(0);
+        txsOne.push(0);
+        txsTwo.push(0);
+        txsTwo.push(0);
+        txsTwo.push(0);
+        feeOne.push(0);
+        feeOne.push(0);
+        feeOne.push(0);
+        feeTwo.push(0);
+        feeTwo.push(0);
+        feeTwo.push(0);
+        
+        // balances after first pay
+        for(let i = 3; i < 10; i++) { bBefore.push(await web3.eth.getBalance(accounts[i])) }
+
+        // pay first
         for(let i = 3; i < 10; i++) {
-
-        investorsBalanceBeforePay.push((await web3.eth.getBalance(accounts[i])))
-
+            let instanse = (await pool.pay({value: sum, from: accounts[i], gasPrice: gasPrice}));
+            txsOne.push(instanse.receipt.gasUsed);
+            feeOne.push(txsOne[i] * gasPrice);
         }
 
-        let usum = 0.1;
+        // balances after first pay
+        for(let i = 3; i < 10; i++) { bAfterFirst.push(await web3.eth.getBalance(accounts[i])) }
 
-        let sum = tw(usum);
+        // asset first pay
+        for(let i = 3; i < 10; i++) { 
+            assert((bBefore[i]).eq((bAfterFirst[i]).plus( (sum).plus(feeOne[i]))), "balances error after raisisng");
+        }
 
-        var txs = []; // usedGas of every tx after first pay 
-        txs.push(0);
-        txs.push(0);
-        txs.push(0);
+        // state money back
+        await pool.startMoneyBack({from: accounts[0], gasPrice: gasPrice});
 
+        // pay second
         for(let i = 3; i < 10; i++) {
-
-        let tx = (await pool.pay({value: (sum), from: accounts[i], gasPrice: gasPrice}))
-
-        let usedGas = tx.receipt.gasUsed;
-
-        txs.push(usedGas);
-
+        let instanse = (await pool.pay({value: sum, from: accounts[i], gasPrice: gasPrice}));
+        txsTwo.push(instanse.receipt.gasUsed);
+        feeTwo.push(txsTwo[i] * gasPrice);
         }
 
-        var balancesAfterFirstPay = []; // balances of accounts after first pay
-        balancesAfterFirstPay.push(0);
-        balancesAfterFirstPay.push(0);
-        balancesAfterFirstPay.push(0);
+        // balances after second pay
+        for(let i = 3; i < 10; i++) { bAfterSecond.push(await web3.eth.getBalance(accounts[i])) }
 
-        var returnedEth = []; // balances of accounts after first pay from Account Pooling 
-        returnedEth.push(0);
-        returnedEth.push(0);
-        returnedEth.push(0);
-        
-        for(let i = 3; i < 10; i++) {
-
-            let usedAm = txs[i];
-
-            let used = gasPrice.mul(usedAm);
-
-            let balanceNow = (await web3.eth.getBalance(accounts[i]));
-
-            let nowPlusAll = ((balanceNow).plus(used).plus( (sum) ));
-
-            balancesAfterFirstPay.push(balanceNow);
-
-            assert( (investorsBalanceBeforePay[i]).eq(nowPlusAll), "error of balances" );
-
-            returnedEth.push(await pool.getETHBalance({from: accounts[i]}));
+        // assert after second
+        for(let i = 3; i < 10; i++) { 
+            assert((bBefore[i]).eq((bAfterSecond[i]).plus(feeOne[i]+feeTwo[i])), "error after money back in balance");
         }
 
-        await pool.startMoneyBack({from: accounts[0]});       
-
-        let sumBack = tw(0.0001);
-
-        var txsB = []; // amount of used gas after second pay
-        txsB.push(0);
-        txsB.push(0);
-        txsB.push(0);
-
-        for(let i = 3; i < 10; i++) {
-        
-        let tx;
-        try {
-            tx = (await pool.pay({value: (sumBack), from: accounts[i], gasPrice: gasPrice}))
-        }
-        catch (error) {
-            console.log(error)
-        }
-
-        let gasUsed = tx.receipt.gasUsed;
-
-        txsB.push(gasUsed);
-
-        }
-
-        for(let i = 3; i < 10; i++) {
-
-            let allGasUsed = txs[i] + txsB[i];
-
-            let transactionsFee = (allGasUsed).mul(gasPrice);
-
-            let sumPlusFeesOfStateHolders = tw(0.1 * 1.08);
-
-            let balanceNow = (await web3.eth.getBalance());
-
-            let blanceBefore = investorsBalanceBeforePay[i];
-
-
-
-            assert(balanceNow.eq(blanceBefore.plus(transactionsFee.plus(sumPlusFeesOfStateHolders))));
-         
-
-        }
-        
-        
-    
+        // another assert after second 
+        // mapping (address => uint256) public investorSum; must be public
+        // mapping (address => uint256) public investorSum; later must be internal
+        // i want to test internal logic of contract here
+        for(let i = 3; i < 10; i++) { 
+            assert((bAfterSecond[i]).eq(((await pool.investorSum(accounts[i]) ).plus((bAfterFirst[i]))).minus(feeTwo[i])), "error 2 after money back in balance");
+        }   
     })
     
 
