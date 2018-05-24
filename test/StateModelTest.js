@@ -29,7 +29,6 @@ const RL_ICO_MANAGER = tbn(0x02);
 const RL_ADMIN = tbn(0x04);
 const RL_PAYBOT = tbn(0x08);
 
-
 contract('StateModelTest', (accounts) => {
   beforeEach(async function() {
     stateModelTest = await StateModelTest.new(RAISING_PERIOD, ICO_PERIOD, DISTRIBUTION_PERIOD, MINIMAL_FUND_SIZE, MAXIMAL_FUND_SIZE);
@@ -45,6 +44,15 @@ contract('StateModelTest', (accounts) => {
     assert(ST_RAISING.eq(await stateModelTest.getState()));
   });
 
+  it("should be setted to ST_WAIT_FOR_ICO when time ends if pool > minimal", async function() {
+    let stateModelTestLocal = await StateModelTest.new(RAISING_PERIOD, ICO_PERIOD, DISTRIBUTION_PERIOD, MINIMAL_FUND_SIZE, MAXIMAL_FUND_SIZE);
+    await stateModelTestLocal.setRole(RL_POOL_MANAGER);
+    await stateModelTestLocal.setState(ST_RAISING);
+    await stateModelTestLocal.setTotalEther(tw(100));
+    await stateModelTestLocal.incTimestamp(RAISING_PERIOD);
+    assert(ST_WAIT_FOR_ICO.eq(await stateModelTestLocal.getState()));
+  });
+
   it("when pool is not collected during RAISING_PERIOD state should be ST_MONEY_BACK", async function() {
     await stateModelTest.setRole(RL_POOL_MANAGER);
     await stateModelTest.setState(ST_RAISING);
@@ -52,6 +60,28 @@ contract('StateModelTest', (accounts) => {
     await stateModelTest.incTimestamp(RAISING_PERIOD);
     assert(ST_MONEY_BACK.eq(await stateModelTest.getState()));
   });
+
+  it("should be setted to ST_TOKEN_DISTRIBUTION from ST_RAISING", async function() {
+    let stateModelTestLocal = await StateModelTest.new(RAISING_PERIOD, ICO_PERIOD, DISTRIBUTION_PERIOD, MINIMAL_FUND_SIZE, MAXIMAL_FUND_SIZE);
+    await stateModelTestLocal.setRole(RL_POOL_MANAGER);
+    await stateModelTestLocal.setState(ST_RAISING);
+    await stateModelTestLocal.setTotalEther(tw(100));
+    await stateModelTestLocal.incTimestamp(RAISING_PERIOD);
+    await stateModelTestLocal.incTimestamp(ICO_PERIOD);
+    assert(ST_TOKEN_DISTRIBUTION.eq(await stateModelTestLocal.getState()));
+  });
+
+  it("should be setted to ST_TOKEN_DISTRIBUTION from ST_WAIT_FOR_ICO", async function() {
+    let stateModelTestLocal = await StateModelTest.new(RAISING_PERIOD, ICO_PERIOD, DISTRIBUTION_PERIOD, MINIMAL_FUND_SIZE, MAXIMAL_FUND_SIZE);
+    await stateModelTestLocal.setRole(RL_POOL_MANAGER);
+    await stateModelTestLocal.setState(ST_RAISING);
+    await stateModelTestLocal.setTotalEther(tw(100));
+    await stateModelTestLocal.setState(ST_WAIT_FOR_ICO);
+    await stateModelTestLocal.setState(ST_TOKEN_DISTRIBUTION);
+    assert(ST_TOKEN_DISTRIBUTION.eq(await stateModelTestLocal.getState()));
+  });
+
+  
  
 
   

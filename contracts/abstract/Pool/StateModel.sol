@@ -24,7 +24,7 @@ contract StateModel is IRoleModel, IShareStore, IStateModel, ITimeMachine{
   function getTimeState_() internal view returns (uint8) {
     uint _launchTimestamp = launchTimestamp;
     uint _relativeTimestamp = getTimestamp_() - _launchTimestamp;
-    if (_launchTimestamp ==0 )
+    if (_launchTimestamp == 0 )
       return TST_DEFAULT;
     if (_relativeTimestamp < raisingPeriod)
       return TST_RAISING;
@@ -121,7 +121,7 @@ contract StateModel is IRoleModel, IShareStore, IStateModel, ITimeMachine{
     }
 
     if (_stateNew == ST_WAIT_FOR_ICO) {
-      if ((_role == (RL_POOL_MANAGER|RL_ICO_MANAGER)) && (_raisingState == RST_COLLECTED)) {
+      if ((_role == _role & (RL_POOL_MANAGER|RL_ICO_MANAGER)) && (_raisingState == RST_COLLECTED)) {
         initialState_ = ST_WAIT_FOR_ICO;
         return true;
       }

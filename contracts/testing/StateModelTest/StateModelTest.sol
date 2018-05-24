@@ -29,7 +29,18 @@ contract StateModelTest is StateModel, TimeMachineT {
     return true;
   }
 
+  function getState() external  view returns(uint8) {
+    return getState_();
+  }
 
+  function getTimeState() external  view returns(uint8) {
+    return getTimeState_();
+  }
+
+  function getRaisingState() external  view returns(uint8) {
+    return getRaisingState_();
+  }
+  
   constructor(uint _raisingPeriod, uint _icoPeriod, uint _distributionPeriod, uint _minimalFundSize, uint _maximalFundSize) public {
     raisingPeriod = _raisingPeriod;
     icoPeriod = _icoPeriod;
