@@ -4,8 +4,8 @@
   "rules": {
     "quotes": ["error", "double"],
     "indentation": ["error", 2],
-    "camelcase": "error",
-    "mixedcase": "error",
+    "camelcase": "warning",
+    "mixedcase": "warning",
     "uppercase": "error"
   }
 }
