@@ -10,7 +10,7 @@ import "./IERC20.sol";
  * @dev https://github.com/ethereum/EIPs/issues/20
  * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
  */
-contract ERC20 is IERC20{
+contract ERC20 is IERC20 {
   using SafeMath for uint;
 
   mapping(address => uint) internal balances;

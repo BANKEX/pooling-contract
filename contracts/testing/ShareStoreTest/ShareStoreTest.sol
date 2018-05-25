@@ -1,0 +1,38 @@
+pragma solidity ^0.4.23;
+
+import "../../abstract/Pool/ShareStore.sol";
+import "../../abstract/TimeMachine/TimeMachineT.sol";
+
+contract ShareStoreTest is ShareStore {
+
+  mapping (address => uint8) internal role_;
+
+  uint8 internal state_;
+
+  constructor(uint _minimalDeposit, address _tokenAddress) public {
+
+    minimalDeposit = _minimalDeposit;
+    tokenAddress = _tokenAddress;
+  }
+
+  function setState(uint8 _state) external {
+    state_ = _state;
+  }
+
+  function setRole(uint8 _role) external {
+    role_[msg.sender] = _role;
+  }
+
+  function getRole() external view returns(uint8) {
+    return role_[msg.sender];
+  }
+
+  function getState() external view returns(uint8) {
+    return getState_();
+  }
+
+  function getState_() internal view returns(uint8) {
+    return state_;
+  }
+
+}

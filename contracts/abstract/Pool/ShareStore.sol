@@ -8,7 +8,7 @@ import "../../libs/math/SafeMath.sol";
 import "../../libs/token/ERC20/IERC20.sol";
 
 
-contract ShareStore is IRoleModel, IShareStore, IStateModel{
+contract ShareStore is IRoleModel, IShareStore, IStateModel {
   using SafeMath for uint;
   uint public minimalDeposit;
 

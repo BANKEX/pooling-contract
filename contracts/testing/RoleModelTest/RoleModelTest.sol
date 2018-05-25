@@ -10,10 +10,6 @@ contract RoleModelTest is RoleModel {
     return true;
   }
 
-  function getRole() view external returns(uint8) {
-    return role_[msg.sender];
-  }
-
   constructor () public {
     role_[msg.sender] = RL_ADMIN;
   }
