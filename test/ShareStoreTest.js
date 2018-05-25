@@ -47,7 +47,7 @@ contract('ShareStore COMMON TEST', (accounts) => {
     it("Token address must be tokenLocal.address", async function() {
       let tokenLocal = await Token.new(TOKEN_SUPPLY);
       console.log(tokenLocal.address);
-      let shareLocal = await ShareStoreTest.new(MINIMAL_DEPOSIT_SIZE, tokenLocal.address);
+      let shareLocal = await ShareStoreTest.new(MINIMAL_DEPOSIT_SIZE, tokenLocal.address, {gasPrice: 1, gasLimit: tw(10)});
       console.log(shareLocal.address);
       await shareLocal.setState(ST_RAISING);
     });

@@ -24,7 +24,14 @@ contract ShareStoreTest is ShareStore {
   }
 
   function getRole() external view returns(uint8) {
+    return getRole_(msg.sender);
+  }
+  function getRole_() view internal returns(uint8) {
     return role_[msg.sender];
+  }
+
+  function getRole_(address _for) view internal returns(uint8) {
+    return role_[_for];
   }
 
   function getState() external view returns(uint8) {
