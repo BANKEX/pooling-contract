@@ -29,7 +29,7 @@ const RL_ICO_MANAGER = tbn(0x02);
 const RL_ADMIN = tbn(0x04);
 const RL_PAYBOT = tbn(0x08);
 
-contract('StateModelTest STATE TEST POSITIVE', (accounts) => {
+contract('StateModelTest COMMON TEST', (accounts) => {
   beforeEach(async function() {
     stateModelTest = await StateModelTest.new(RAISING_PERIOD, ICO_PERIOD, DISTRIBUTION_PERIOD, MINIMAL_FUND_SIZE, MAXIMAL_FUND_SIZE);
   });
@@ -136,7 +136,7 @@ contract('StateModelTest ROLE TEST POSITIVE', (accounts) => {
     let stateModelTestLocal = await StateModelTest.new(RAISING_PERIOD, ICO_PERIOD, DISTRIBUTION_PERIOD, MINIMAL_FUND_SIZE, MAXIMAL_FUND_SIZE);
     await stateModelTestLocal.setRole(RL_POOL_MANAGER);
     await stateModelTestLocal.setState(ST_RAISING);
-    await stateModelTestLocal.setTotalEther(tw(10));
+    await stateModelTestLocal.setTotalEther(tw(100));
     await stateModelTestLocal.setRole(RL_POOL_MANAGER);
     await stateModelTestLocal.setState(ST_MONEY_BACK);
     assert(ST_MONEY_BACK.eq(await stateModelTestLocal.getState()));
@@ -145,7 +145,7 @@ contract('StateModelTest ROLE TEST POSITIVE', (accounts) => {
     let stateModelTestLocal = await StateModelTest.new(RAISING_PERIOD, ICO_PERIOD, DISTRIBUTION_PERIOD, MINIMAL_FUND_SIZE, MAXIMAL_FUND_SIZE);
     await stateModelTestLocal.setRole(RL_POOL_MANAGER);
     await stateModelTestLocal.setState(ST_RAISING);
-    await stateModelTestLocal.setTotalEther(tw(10));
+    await stateModelTestLocal.setTotalEther(tw(100));
     await stateModelTestLocal.setRole(RL_PAYBOT);
     await stateModelTestLocal.setState(ST_MONEY_BACK);
     assert(ST_MONEY_BACK.eq(await stateModelTestLocal.getState()));
@@ -154,20 +154,59 @@ contract('StateModelTest ROLE TEST POSITIVE', (accounts) => {
     let stateModelTestLocal = await StateModelTest.new(RAISING_PERIOD, ICO_PERIOD, DISTRIBUTION_PERIOD, MINIMAL_FUND_SIZE, MAXIMAL_FUND_SIZE);
     await stateModelTestLocal.setRole(RL_POOL_MANAGER);
     await stateModelTestLocal.setState(ST_RAISING);
-    await stateModelTestLocal.setTotalEther(tw(10));
+    await stateModelTestLocal.setTotalEther(tw(100));
     await stateModelTestLocal.setRole(RL_ADMIN);
     await stateModelTestLocal.setState(ST_MONEY_BACK);
     assert(ST_MONEY_BACK.eq(await stateModelTestLocal.getState()));
   })
 
+  it("admin should be able to set state to ST_TOKEN_DISTRIBUTION", async function() {
+    let stateModelTestLocal = await StateModelTest.new(RAISING_PERIOD, ICO_PERIOD, DISTRIBUTION_PERIOD, MINIMAL_FUND_SIZE, MAXIMAL_FUND_SIZE);
+    await stateModelTestLocal.setRole(RL_POOL_MANAGER);
+    await stateModelTestLocal.setState(ST_RAISING);
+    await stateModelTestLocal.setTotalEther(tw(100));
+    await stateModelTestLocal.setState(ST_WAIT_FOR_ICO);
+    await stateModelTestLocal.setRole(RL_ADMIN);
+    await stateModelTestLocal.setState(ST_TOKEN_DISTRIBUTION);
+    assert(ST_TOKEN_DISTRIBUTION.eq(await stateModelTestLocal.getState()));
+  })
 
- 
+  it("ico manager should be able to set state to ST_TOKEN_DISTRIBUTION", async function() {
+    let stateModelTestLocal = await StateModelTest.new(RAISING_PERIOD, ICO_PERIOD, DISTRIBUTION_PERIOD, MINIMAL_FUND_SIZE, MAXIMAL_FUND_SIZE);
+    await stateModelTestLocal.setRole(RL_POOL_MANAGER);
+    await stateModelTestLocal.setState(ST_RAISING);
+    await stateModelTestLocal.setTotalEther(tw(100));
+    await stateModelTestLocal.setState(ST_WAIT_FOR_ICO);
+    await stateModelTestLocal.setRole(RL_ICO_MANAGER);
+    await stateModelTestLocal.setState(ST_TOKEN_DISTRIBUTION);
+    assert(ST_TOKEN_DISTRIBUTION.eq(await stateModelTestLocal.getState()));
+  })
+  it("pool manager should be able to set state to ST_TOKEN_DISTRIBUTION", async function() {
+    let stateModelTestLocal = await StateModelTest.new(RAISING_PERIOD, ICO_PERIOD, DISTRIBUTION_PERIOD, MINIMAL_FUND_SIZE, MAXIMAL_FUND_SIZE);
+    await stateModelTestLocal.setRole(RL_POOL_MANAGER);
+    await stateModelTestLocal.setState(ST_RAISING);
+    await stateModelTestLocal.setTotalEther(tw(100));
+    await stateModelTestLocal.setState(ST_WAIT_FOR_ICO);
+    await stateModelTestLocal.setState(ST_TOKEN_DISTRIBUTION);
+    assert(ST_TOKEN_DISTRIBUTION.eq(await stateModelTestLocal.getState()));
+  })
+
+  it("PAY BOT should be able to set state to ST_TOKEN_DISTRIBUTION", async function() {
+    let stateModelTestLocal = await StateModelTest.new(RAISING_PERIOD, ICO_PERIOD, DISTRIBUTION_PERIOD, MINIMAL_FUND_SIZE, MAXIMAL_FUND_SIZE);
+    await stateModelTestLocal.setRole(RL_POOL_MANAGER);
+    await stateModelTestLocal.setState(ST_RAISING);
+    await stateModelTestLocal.setTotalEther(tw(100));
+    await stateModelTestLocal.setState(ST_WAIT_FOR_ICO);
+    await stateModelTestLocal.setRole(RL_PAYBOT);
+    await stateModelTestLocal.setState(ST_TOKEN_DISTRIBUTION);
+    assert(ST_TOKEN_DISTRIBUTION.eq(await stateModelTestLocal.getState()));
+  })
 
 });
 
 contract('StateModelTest ROLE TEST NEGATIVE', (accounts) => {
   
-  it("admin or ico manager or paybot shouldn't be able to set state to ST_RAISING", async function() {
+  it("admin or ico manager or paybot or DEFAULT shouldn't be able to set state to ST_RAISING", async function() {
     let stateModelTestLocal = await StateModelTest.new(RAISING_PERIOD, ICO_PERIOD, DISTRIBUTION_PERIOD, MINIMAL_FUND_SIZE, MAXIMAL_FUND_SIZE);
     await stateModelTestLocal.setRole(RL_ADMIN);
     try {await stateModelTestLocal.setState(ST_RAISING);} catch (err) {}
@@ -175,8 +214,39 @@ contract('StateModelTest ROLE TEST NEGATIVE', (accounts) => {
     try {await stateModelTestLocal.setState(ST_RAISING);} catch (err) {}
     await stateModelTestLocal.setRole(RL_PAYBOT);
     try {await stateModelTestLocal.setState(ST_RAISING);} catch (err) {}
+    await stateModelTestLocal.setRole(RL_DEFAULT);
+    try {await stateModelTestLocal.setState(ST_RAISING);} catch (err) {}
     assert(ST_DEFAULT.eq(await stateModelTestLocal.getState()));
   })
+
+  it("admin or DEFAULT or paybot shouldn't be able to set state to ST_WAIT_FOR_ICO", async function() {
+    let stateModelTestLocal = await StateModelTest.new(RAISING_PERIOD, ICO_PERIOD, DISTRIBUTION_PERIOD, MINIMAL_FUND_SIZE, MAXIMAL_FUND_SIZE);
+    await stateModelTestLocal.setRole(RL_POOL_MANAGER);
+    await stateModelTestLocal.setState(ST_RAISING);
+    await stateModelTestLocal.setTotalEther(tw(100));
+    await stateModelTestLocal.setRole(RL_ADMIN);
+    try {await stateModelTestLocal.setState(ST_WAIT_FOR_ICO);} catch (err) {}
+    await stateModelTestLocal.setRole(RL_PAYBOT);
+    try {await stateModelTestLocal.setState(ST_WAIT_FOR_ICO);} catch (err) {}
+    await stateModelTestLocal.setRole(RL_DEFAULT);
+    try {await stateModelTestLocal.setState(ST_WAIT_FOR_ICO);} catch (err) {}
+    assert(ST_RAISING.eq(await stateModelTestLocal.getState()), `current state, because RL_DEFAULT changed it ${ (await stateModelTestLocal.getState()).toString() }`);
+  })
+
+  it("DEFAULT or ico manager shouldn't be able to set state to ST_WAIT_FOR_ICO", async function() {
+    let stateModelTestLocal = await StateModelTest.new(RAISING_PERIOD, ICO_PERIOD, DISTRIBUTION_PERIOD, MINIMAL_FUND_SIZE, MAXIMAL_FUND_SIZE);
+    await stateModelTestLocal.setRole(RL_POOL_MANAGER);
+    await stateModelTestLocal.setState(ST_RAISING);
+    await stateModelTestLocal.setTotalEther(tw(100));
+    await stateModelTestLocal.setRole(RL_DEFAULT);
+    try {await stateModelTestLocal.setState(ST_MONEY_BACK);} catch (err) {}
+    await stateModelTestLocal.setRole(RL_ICO_MANAGER);
+    try {await stateModelTestLocal.setState(ST_MONEY_BACK);} catch (err) {}
+    assert(ST_RAISING.eq(await stateModelTestLocal.getState()), `current state, because RL_DEFAULT changed it ${ (await stateModelTestLocal.getState()).toString() }`);
+  })
+
+
+
 
 });
 

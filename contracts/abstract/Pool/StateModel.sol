@@ -121,7 +121,7 @@ contract StateModel is IRoleModel, IShareStore, IStateModel, ITimeMachine{
     }
 
     if (_stateNew == ST_WAIT_FOR_ICO) {
-      if ((_role == _role & (RL_POOL_MANAGER|RL_ICO_MANAGER)) && (_raisingState == RST_COLLECTED)) {
+      if ((_role == _role & (RL_POOL_MANAGER|RL_ICO_MANAGER)) && (_raisingState == RST_COLLECTED) && _role != RL_DEFAULT) {
         initialState_ = ST_WAIT_FOR_ICO;
         return true;
       }
@@ -129,7 +129,7 @@ contract StateModel is IRoleModel, IShareStore, IStateModel, ITimeMachine{
     }
 
     if (_stateNew == ST_MONEY_BACK) {
-      if ((_role == _role & (RL_POOL_MANAGER|RL_ADMIN|RL_PAYBOT)) && (_state == ST_RAISING)) {
+      if ((_role == _role & (RL_POOL_MANAGER|RL_ADMIN|RL_PAYBOT)) && (_state == ST_RAISING) && _role != RL_DEFAULT) {
         initialState_ = ST_MONEY_BACK;
         return true;
       }
@@ -137,7 +137,7 @@ contract StateModel is IRoleModel, IShareStore, IStateModel, ITimeMachine{
     }
 
     if (_stateNew == ST_TOKEN_DISTRIBUTION) {
-      if ((_role == _role & (RL_POOL_MANAGER|RL_ADMIN|RL_ICO_MANAGER|RL_PAYBOT)) && (_state == ST_WAIT_FOR_ICO)) {
+      if ((_role == _role & (RL_POOL_MANAGER|RL_ADMIN|RL_ICO_MANAGER|RL_PAYBOT)) && (_state == ST_WAIT_FOR_ICO) && _role != RL_DEFAULT) {
         initialState_ = ST_TOKEN_DISTRIBUTION;
         return true;
       }
