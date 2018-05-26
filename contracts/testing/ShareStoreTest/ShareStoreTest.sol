@@ -10,13 +10,12 @@ contract ShareStoreTest is ShareStore {
   uint8 internal state_;
 
   constructor(uint _minimalDeposit, address _tokenAddress) public {
-
     minimalDeposit = _minimalDeposit;
     tokenAddress = _tokenAddress;
   }
 
-  function setState(uint8 _state) external {
-    state_ = _state;
+  function getInvestedSum() external view returns(uint) {
+    return totalShare;
   }
 
   function setRole(uint8 _role) external {
@@ -26,12 +25,17 @@ contract ShareStoreTest is ShareStore {
   function getRole() external view returns(uint8) {
     return getRole_(msg.sender);
   }
+
   function getRole_() view internal returns(uint8) {
     return role_[msg.sender];
   }
 
   function getRole_(address _for) view internal returns(uint8) {
     return role_[_for];
+  }
+
+  function setState(uint8 _state) external {
+    state_ = _state;
   }
 
   function getState() external view returns(uint8) {

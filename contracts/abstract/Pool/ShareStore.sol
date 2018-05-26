@@ -116,7 +116,6 @@ contract ShareStore is IRoleModel, IShareStore, IStateModel {
     return true;
   }
 
-
   function buyShare() external payable returns(bool) {
     return buyShare_(getState_());
   }

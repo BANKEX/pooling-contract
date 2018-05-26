@@ -30,7 +30,7 @@ const RAISING_PERIOD = TI_DAY.mul(10);
 const ICO_PERIOD = TI_DAY.mul(15);
 const DISTRIBUTION_PERIOD = TI_DAY.mul(45);
 
-const MINIMAL_FUND_SIZE = tw(100);
+const MINIMAL_FUND_SIZE = tw(1);
 const MAXIMAL_FUND_SIZE = tw(100000);
 
 const INVESTOR_SUM_PAY = tw(0.5);
@@ -46,10 +46,46 @@ contract('ShareStore COMMON TEST', (accounts) => {
     
     it("Token address must be tokenLocal.address", async function() {
       let tokenLocal = await Token.new(TOKEN_SUPPLY);
-      console.log(tokenLocal.address);
-      let shareLocal = await ShareStoreTest.new(MINIMAL_DEPOSIT_SIZE, tokenLocal.address, {gasPrice: 1, gasLimit: tw(10)});
-      console.log(shareLocal.address);
-      await shareLocal.setState(ST_RAISING);
+      let shareLocal = await ShareStoreTest.new(MINIMAL_DEPOSIT_SIZE, tokenLocal.address);
+      assert.equal(tokenLocal.address, await shareLocal.tokenAddress());
     });
+
+    it("should allow to collect ether during raising", async function() {
+      let tokenLocal = await Token.new(TOKEN_SUPPLY);
+      let shareLocal = await ShareStoreTest.new(MINIMAL_DEPOSIT_SIZE, tokenLocal.address);
+      await shareLocal.setRole(RL_POOL_MANAGER, {from: accounts[0]});
+      await shareLocal.setState(ST_RAISING);
+      assert(ST_RAISING.eq(await shareLocal.getState()));
+      for(let i = 3; i < 10; i++) 
+      {
+        await shareLocal.sendTransaction({value: INVESTOR_SUM_PAY, from: accounts[i]});
+      }
+      let investedSum = INVESTOR_SUM_PAY.mul(7);
+      assert(investedSum.eq(await shareLocal.getInvestedSum()));
+    })
+
+    it("should allow to start wait for ico and realase tokens from pooling", async function() {
+      const gasPrice = tw("3e-7");
+      let tokenLocal = await Token.new(TOKEN_SUPPLY);
+      let shareLocal = await ShareStoreTest.new(MINIMAL_DEPOSIT_SIZE, tokenLocal.address);
+      await shareLocal.setRole(RL_POOL_MANAGER, {from: accounts[0]});
+      await shareLocal.setState(ST_RAISING);
+      assert(ST_RAISING.eq(await shareLocal.getState()));
+      for(let i = 3; i < 10; i++) 
+      {
+        await shareLocal.sendTransaction({value: INVESTOR_SUM_PAY, from: accounts[i]});
+      }
+      let investedSum = INVESTOR_SUM_PAY.mul(7);
+      await shareLocal.setRole(RL_ICO_MANAGER, {from: accounts[1]});
+      await shareLocal.setState(ST_WAIT_FOR_ICO);
+      let balBefore = await web3.eth.getBalance(accounts[0]);
+      let instance = await shareLocal.releaseEtherToStakeholder(investedSum, {from: accounts[0], gasPrice: gasPrice});
+      let gasUsed = instance.receipt.gasUsed;
+
+      let transactionCost = gasUsed * gasPrice;
+      
+      assert((balBefore.plus((investedSum).plus(transactionCost)).eq((await web3.eth.getBalance(accounts[0])))));
+
+    })
 
 })
