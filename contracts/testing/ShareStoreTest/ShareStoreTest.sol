@@ -5,7 +5,7 @@ import "../../abstract/TimeMachine/TimeMachineT.sol";
 
 contract ShareStoreTest is ShareStore {
 
-  mapping (address => uint8) internal role_;
+  mapping(address => uint8) internal role_;
 
   uint8 internal state_;
 
@@ -14,7 +14,7 @@ contract ShareStoreTest is ShareStore {
     tokenAddress = _tokenAddress;
   }
 
-  function getInvestedSum() external view returns(uint) {
+  function getInvestedSum() external view returns (uint) {
     return totalShare;
   }
 
@@ -22,15 +22,15 @@ contract ShareStoreTest is ShareStore {
     role_[msg.sender] = _role;
   }
 
-  function getRole() external view returns(uint8) {
+  function getRole() external view returns (uint8) {
     return getRole_(msg.sender);
   }
 
-  function getRole_() view internal returns(uint8) {
+  function getRole_() view internal returns (uint8) {
     return role_[msg.sender];
   }
 
-  function getRole_(address _for) view internal returns(uint8) {
+  function getRole_(address _for) view internal returns (uint8) {
     return role_[_for];
   }
 
@@ -38,12 +38,16 @@ contract ShareStoreTest is ShareStore {
     state_ = _state;
   }
 
-  function getState() external view returns(uint8) {
+  function getState() external view returns (uint8) {
     return getState_();
   }
 
-  function getState_() internal view returns(uint8) {
+  function getState_() internal view returns (uint8) {
     return state_;
+  }
+
+  function setStakeHolderShare(uint _sum, uint8 _role) public {
+    stakeholderShare[_role] = _sum;
   }
 
 }

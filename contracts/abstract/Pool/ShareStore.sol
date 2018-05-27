@@ -48,7 +48,7 @@ contract ShareStore is IRoleModel, IShareStore, IStateModel {
     require(_state == ST_WAIT_FOR_ICO);
     totalToken = totalToken.add(_value);
     emit AcceptTokenFromICO(msg.sender, _value);
-    require(IERC20(tokenAddress).transferFrom(msg.sender, this, _value));
+    gi(IERC20(tokenAddress).transferFrom(msg.sender, this, _value));
     return true;
   }
 

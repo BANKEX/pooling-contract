@@ -43,49 +43,77 @@ const RL_ADMIN = tbn(0x04);
 const RL_PAYBOT = tbn(0x08);
 
 contract('ShareStore COMMON TEST', (accounts) => {
-    
-    it("Token address must be tokenLocal.address", async function() {
-      let tokenLocal = await Token.new(TOKEN_SUPPLY);
-      let shareLocal = await ShareStoreTest.new(MINIMAL_DEPOSIT_SIZE, tokenLocal.address);
-      assert.equal(tokenLocal.address, await shareLocal.tokenAddress());
+
+    it("Token address must be tokenLocal.address", async function () {
+        let tokenLocal = await Token.new(TOKEN_SUPPLY);
+        let shareLocal = await ShareStoreTest.new(MINIMAL_DEPOSIT_SIZE, tokenLocal.address);
+        assert.equal(tokenLocal.address, await shareLocal.tokenAddress());
     });
 
-    it("should allow to collect ether during raising", async function() {
-      let tokenLocal = await Token.new(TOKEN_SUPPLY);
-      let shareLocal = await ShareStoreTest.new(MINIMAL_DEPOSIT_SIZE, tokenLocal.address);
-      await shareLocal.setRole(RL_POOL_MANAGER, {from: accounts[0]});
-      await shareLocal.setState(ST_RAISING);
-      assert(ST_RAISING.eq(await shareLocal.getState()));
-      for(let i = 3; i < 10; i++) 
-      {
-        await shareLocal.sendTransaction({value: INVESTOR_SUM_PAY, from: accounts[i]});
-      }
-      let investedSum = INVESTOR_SUM_PAY.mul(7);
-      assert(investedSum.eq(await shareLocal.getInvestedSum()));
-    })
+    it("should allow to collect ether during raising", async function () {
+        let tokenLocal = await Token.new(TOKEN_SUPPLY);
+        let shareLocal = await ShareStoreTest.new(MINIMAL_DEPOSIT_SIZE, tokenLocal.address);
+        await shareLocal.setRole(RL_POOL_MANAGER, {from: accounts[0]});
+        await shareLocal.setState(ST_RAISING);
+        assert(ST_RAISING.eq(await shareLocal.getState()));
+        for (let i = 3; i < 10; i++)
+        {
+            await shareLocal.sendTransaction({value: INVESTOR_SUM_PAY, from: accounts[i]});
+        }
+        let investedSum = INVESTOR_SUM_PAY.mul(7);
+        assert(investedSum.eq(await shareLocal.getInvestedSum()));
+    });
 
-    it("should allow to start wait for ico and realase tokens from pooling", async function() {
-      const gasPrice = tw("3e-7");
-      let tokenLocal = await Token.new(TOKEN_SUPPLY);
-      let shareLocal = await ShareStoreTest.new(MINIMAL_DEPOSIT_SIZE, tokenLocal.address);
-      await shareLocal.setRole(RL_POOL_MANAGER, {from: accounts[0]});
-      await shareLocal.setState(ST_RAISING);
-      assert(ST_RAISING.eq(await shareLocal.getState()));
-      for(let i = 3; i < 10; i++) 
-      {
-        await shareLocal.sendTransaction({value: INVESTOR_SUM_PAY, from: accounts[i]});
-      }
-      let investedSum = INVESTOR_SUM_PAY.mul(7);
-      await shareLocal.setRole(RL_ICO_MANAGER, {from: accounts[1]});
-      await shareLocal.setState(ST_WAIT_FOR_ICO);
-      let balBefore = await web3.eth.getBalance(accounts[0]);
-      let instance = await shareLocal.releaseEtherToStakeholder(investedSum, {from: accounts[0], gasPrice: gasPrice});
-      let gasUsed = instance.receipt.gasUsed;
+    it("should allow to start wait for ico and release tokens from pooling", async function () {
+        const gasPrice = tw("3e-7");
+        let tokenLocal = await Token.new(TOKEN_SUPPLY);
+        let shareLocal = await ShareStoreTest.new(MINIMAL_DEPOSIT_SIZE, tokenLocal.address);
+        await shareLocal.setRole(RL_POOL_MANAGER, {from: accounts[0]});
+        await shareLocal.setState(ST_RAISING);
+        assert(ST_RAISING.eq(await shareLocal.getState()));
+        for (let i = 3; i < 10; i++)
+        {
+            await shareLocal.sendTransaction({value: INVESTOR_SUM_PAY, from: accounts[i]});
+        }
+        let investedSum = INVESTOR_SUM_PAY.mul(7);
+        await shareLocal.setRole(RL_ICO_MANAGER, {from: accounts[2]});
+        await shareLocal.setState(ST_WAIT_FOR_ICO);
+        await shareLocal.setStakeHolderShare(tw(1), 2, {from: accounts[2]});
+        let balBefore = await web3.eth.getBalance(accounts[2]);
+        let instance = await shareLocal.releaseEtherToStakeholder(tw(1), {from: accounts[2], gasPrice: gasPrice});
+        let gasUsed = instance.receipt.gasUsed;
+        let transactionCost = gasUsed * gasPrice;
+        let balAfter = (await web3.eth.getBalance(accounts[2]));
+        assert(balBefore.eq((balAfter.minus(tw(1))).plus(transactionCost)));
+    });
 
-      let transactionCost = gasUsed * gasPrice;
-      
-      assert((balBefore.plus((investedSum).plus(transactionCost)).eq((await web3.eth.getBalance(accounts[0])))));
+    it("should allow to release tokens to investors", async function () {
+        const gasPrice = tw("3e-7");
+        let tokenLocal = await Token.new(TOKEN_SUPPLY);
+        let shareLocal = await ShareStoreTest.new(MINIMAL_DEPOSIT_SIZE, tokenLocal.address);
+        await shareLocal.setRole(RL_POOL_MANAGER, {from: accounts[0]});
+        await shareLocal.setState(ST_RAISING);
+        assert(ST_RAISING.eq(await shareLocal.getState()));
+        for (let i = 3; i < 10; i++)
+        {
+            await shareLocal.sendTransaction({value: INVESTOR_SUM_PAY, from: accounts[i]});
+        }
+        let investedSum = INVESTOR_SUM_PAY.mul(7);
+        await shareLocal.setRole(RL_ICO_MANAGER, {from: accounts[2]});
+        await shareLocal.setState(ST_WAIT_FOR_ICO);
+        await shareLocal.setStakeHolderShare(tw(1), 2, {from: accounts[2]});
+        let balBefore = await web3.eth.getBalance(accounts[2]);
+        let instance = await shareLocal.releaseEtherToStakeholder(tw(1), {from: accounts[2], gasPrice: gasPrice});
+        let gasUsed = instance.receipt.gasUsed;
+        let transactionCost = gasUsed * gasPrice;
+        let balAfter = (await web3.eth.getBalance(accounts[2]));
+        assert(balBefore.eq((balAfter.minus(tw(1))).plus(transactionCost)));
+        await tokenLocal.approve(shareLocal.address, TOKEN_SUPPLY, {from: accounts[0]});
+        await shareLocal.acceptTokenFromICO(tw(1), {from: accounts[2]});
+        await shareLocal.setState(ST_TOKEN_DISTRIBUTION);
+        await shareLocal.releaseToken(100, {from: accounts[4]});
+        let tokensBalance = (await tokenLocal.balanceOf(accounts[4]));
+        console.log(tokensBalance.toString());
+    });
 
-    })
-
-})
+});
