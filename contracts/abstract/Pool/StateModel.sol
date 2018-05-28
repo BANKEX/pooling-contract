@@ -7,7 +7,7 @@ import "./IShareStore.sol";
 
 
 
-contract StateModel is IRoleModel, IShareStore, IStateModel, ITimeMachine{
+contract StateModel is IRoleModel, IShareStore, IStateModel, ITimeMachine {
   uint public launchTimestamp;
 
   uint public raisingPeriod;
@@ -16,11 +16,9 @@ contract StateModel is IRoleModel, IShareStore, IStateModel, ITimeMachine{
 
   uint public minimalFundSize;
   uint public maximalFundSize;
-
+  
   uint8 internal initialState_;
-
-
-
+ 
   function getTimeState_() internal view returns (uint8) {
     uint _launchTimestamp = launchTimestamp;
     uint _relativeTimestamp = getTimestamp_() - _launchTimestamp;
