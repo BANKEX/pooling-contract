@@ -1,3 +1,7 @@
+## WIP. Not for production usage.
+
+See documentation at https://bankex.github.io/
+
 ## Tests
 
 1) Allowance tests - @nk

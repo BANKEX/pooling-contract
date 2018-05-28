@@ -48,7 +48,7 @@ contract ShareStore is IRoleModel, IShareStore, IStateModel {
     require(_state == ST_WAIT_FOR_ICO);
     totalToken = totalToken.add(_value);
     emit AcceptTokenFromICO(msg.sender, _value);
-    gi(IERC20(tokenAddress).transferFrom(msg.sender, this, _value));
+    require(IERC20(tokenAddress).transferFrom(msg.sender, this, _value));
     return true;
   }
 
@@ -63,11 +63,12 @@ contract ShareStore is IRoleModel, IShareStore, IStateModel {
     return 0;
   }
 
-  function releaseEtherToStakeholder_(uint8 _state, uint8 _for, address _afor, uint _value) internal returns (bool) {
+  function releaseEtherToStakeholder_(uint8 _state, uint8 _for, uint _value) internal returns (bool) {
     require(_for != RL_DEFAULT);
     require(_for != RL_PAYBOT);
     require(!((_for == RL_ICO_MANAGER) && (_state != ST_WAIT_FOR_ICO)));
     uint _balance = getStakeholderBalanceOf_(_for);
+    address _afor = getRoleAddress_(_for);
     require(_balance >= _value);
     stakeholderEtherReleased_[_for] = stakeholderEtherReleased_[_for].add(_value);
     emit ReleaseEtherToStakeholder(_for, _afor, _value);
@@ -138,14 +139,13 @@ contract ShareStore is IRoleModel, IShareStore, IStateModel {
   }
 
   function releaseEtherToStakeholder(uint _value) external returns(bool) {
-    return releaseEtherToStakeholder_(getState_(), getRole_(), msg.sender, _value);
+    return releaseEtherToStakeholder_(getState_(), getRole_(), _value);
   }
 
-  function releaseEtherToStakeholderForce(address _afor, uint _value) external returns(bool) {
+  function releaseEtherToStakeholderForce(uint8 _for, uint _value) external returns(bool) {
     uint8 _role = getRole_();
-    uint8 _for = getRole_(_afor);
     require((_role==RL_ADMIN) || (_role==RL_PAYBOT));
-    return releaseEtherToStakeholder_(getState_(), _for, _afor, _value);
+    return releaseEtherToStakeholder_(getState_(), _for, _value);
   }
 
   function releaseEther(uint _value) external returns(bool) {

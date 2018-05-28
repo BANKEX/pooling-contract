@@ -11,5 +11,6 @@ contract IRoleModel {
 
   function getRole_() view internal returns(uint8);
   function getRole_(address _for) view internal returns(uint8);
+  function getRoleAddress_(uint8 _for) view internal returns(address);
   
 }
