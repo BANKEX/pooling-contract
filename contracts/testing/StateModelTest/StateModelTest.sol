@@ -15,8 +15,12 @@ contract StateModelTest is StateModel, TimeMachineT {
     return role_;
   }
 
-  function getRole_(address addr) internal view returns(uint8) {
+  function getRole_(address _for) internal view returns(uint8) {
     return role_;
+  }
+  
+  function getRoleAddress_(uint8 _for) view internal returns(address) {
+    return msg.sender;
   }
 
   function setRole(uint8 _role) external returns(bool) {
