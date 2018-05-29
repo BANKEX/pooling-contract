@@ -44,8 +44,7 @@ contract ShareStore is IRoleModel, IShareStore, IStateModel {
     return true;
   }
 
-  function acceptTokenFromICO_(uint8 _state, uint _value) internal returns(bool) {
-    require(_state == ST_WAIT_FOR_ICO);
+  function acceptTokenFromICO_(uint _value) internal returns(bool) {
     totalToken = totalToken.add(_value);
     emit AcceptTokenFromICO(msg.sender, _value);
     require(IERC20(tokenAddress).transferFrom(msg.sender, this, _value));
@@ -86,9 +85,8 @@ contract ShareStore is IRoleModel, IShareStore, IStateModel {
     return totalToken.mul(share[_for]).div(totalShare).sub(etherReleased_[_for]);
   }
 
-  function releaseEther_(uint8 _state, address _for, uint _value) internal returns (bool) {
+  function releaseEther_(address _for, uint _value) internal returns (bool) {
     uint _balance = getBalanceEtherOf_(_for);
-    require((_state == ST_MONEY_BACK) || (_state == ST_TOKEN_DISTRIBUTION));
     require(_balance >= _value);
     etherReleased_[_for] = etherReleased_[_for].add(_value);
     emit ReleaseEther(_for, _value);
@@ -96,9 +94,8 @@ contract ShareStore is IRoleModel, IShareStore, IStateModel {
     return true;
   }
 
-  function releaseToken_(uint8 _state, address _for, uint _value) internal returns (bool) {
+  function releaseToken_( address _for, uint _value) internal returns (bool) {
     uint _balance = getBalanceTokenOf_(_for);
-    require((_state == ST_MONEY_BACK) || (_state == ST_TOKEN_DISTRIBUTION));
     require(_balance >= _value);
     tokenReleased_[_for] = tokenReleased_[_for].add(_value);
     emit ReleaseToken(_for, _value);
@@ -106,8 +103,7 @@ contract ShareStore is IRoleModel, IShareStore, IStateModel {
     return true;
   }
 
-  function refundShare_(uint8 _state, address _for, uint _value) internal returns(bool){
-    require(_state == ST_RAISING);
+  function refundShare_(address _for, uint _value) internal returns(bool){
     uint _balance = share[_for];
     require(_balance >= _value);
     share[_for] = _balance.sub(_value);
@@ -122,8 +118,9 @@ contract ShareStore is IRoleModel, IShareStore, IStateModel {
   }
 
   function acceptTokenFromICO(uint _value) external returns(bool) {
+    require(getState_() == ST_WAIT_FOR_ICO);
     require(getRole_() == RL_ICO_MANAGER);
-    return acceptTokenFromICO_(getState_(), _value);
+    return acceptTokenFromICO_(_value);
   }
 
   function getStakeholderBalanceOf(uint8 _for) external view returns(uint) {
@@ -149,24 +146,47 @@ contract ShareStore is IRoleModel, IShareStore, IStateModel {
   }
 
   function releaseEther(uint _value) external returns(bool) {
-    return releaseEther_(getState_(), msg.sender, _value);
+    uint8 _state = getState_();
+    require((_state == ST_MONEY_BACK) || (_state == ST_TOKEN_DISTRIBUTION));
+    return releaseEther_(msg.sender, _value);
   }
 
   function releaseEtherForce(address _for, uint _value) external returns(bool) {
     uint8 _role = getRole_();
+    uint8 _state = getState_();
+    require((_state == ST_MONEY_BACK) || (_state == ST_TOKEN_DISTRIBUTION));
     require((_role==RL_ADMIN) || (_role==RL_PAYBOT));
-    return releaseEther_(getState_(), _for, _value);
+    return releaseEther_(_for, _value);
   }
 
   function releaseToken(uint _value) external returns(bool) {
-    return releaseToken_(getState_(), msg.sender, _value);
+    uint8 _state = getState_();
+    require((_state == ST_MONEY_BACK) || (_state == ST_TOKEN_DISTRIBUTION));
+    return releaseToken_(msg.sender, _value);
   }
 
   function releaseTokenForce(address _for, uint _value) external returns(bool) {
     uint8 _role = getRole_();
+    uint8 _state = getState_();
+    require((_state == ST_MONEY_BACK) || (_state == ST_TOKEN_DISTRIBUTION));
     require((_role==RL_ADMIN) || (_role==RL_PAYBOT));
-    return releaseToken_(getState_(), _for, _value);
+    return releaseToken_(_for, _value);
   }
+
+  function refundShare(uint _value) external returns(bool){
+    uint8 _state = getState_();
+    require (_state == ST_MONEY_BACK);
+    return refundShare_(msg.sender, _value);
+  }
+  
+  function refundShareForce(address _for, uint _value) external returns(bool){
+    uint8 _state = getState_();
+    uint8 _role = getRole_();
+    require(_role == RL_ADMIN || _role == RL_PAYBOT);
+    require (_state == ST_MONEY_BACK || _state == ST_RAISING);
+    return refundShare_(_for, _value);
+  }
+  
 
   function () public payable {
     uint8 _state = getState_();
@@ -176,13 +196,13 @@ contract ShareStore is IRoleModel, IShareStore, IStateModel {
     }
 
     if (_state == ST_MONEY_BACK) {
-      releaseEther_(_state, msg.sender, getBalanceEtherOf_(msg.sender));
+      refundShare_(msg.sender, share[msg.sender]);
       return;
     }
 
     if (_state == ST_TOKEN_DISTRIBUTION) {
-      releaseEther_(_state, msg.sender, getBalanceEtherOf_(msg.sender));
-      releaseToken_(_state, msg.sender, getBalanceTokenOf_(msg.sender));
+      releaseEther_(msg.sender, getBalanceEtherOf_(msg.sender));
+      releaseToken_(msg.sender, getBalanceTokenOf_(msg.sender));
       return;
     }
     revert();
