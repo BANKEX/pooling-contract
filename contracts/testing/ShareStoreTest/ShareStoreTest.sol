@@ -14,6 +14,9 @@ contract ShareStoreTest is ShareStore {
   constructor(uint _minimalDeposit, address _tokenAddress) public {
     minimalDeposit = _minimalDeposit;
     tokenAddress = _tokenAddress;
+    stakeholderShare[1] = 4;
+    stakeholderShare[2] = 95;
+    stakeholderShare[4] = 1;
   }
 
 
@@ -30,6 +33,7 @@ contract ShareStoreTest is ShareStore {
   function getRole_(address) view internal returns (uint8) {
     return role_;
   }
+  
   
   function getRoleAddress_(uint8) view internal returns (address) {
     return roleAddress_;
