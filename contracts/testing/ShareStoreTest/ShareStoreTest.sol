@@ -3,7 +3,7 @@ pragma solidity ^0.4.23;
 import "../../abstract/Pool/ShareStore.sol";
 import "../../abstract/TimeMachine/TimeMachineT.sol";
 
-contract ShareStoreTest is ShareStore {
+contract ShareStoreTest is ShareStore, TimeMachineT {
 
   uint8 internal role_;
   address internal roleAddress_;
@@ -14,9 +14,9 @@ contract ShareStoreTest is ShareStore {
   constructor(uint _minimalDeposit, address _tokenAddress) public {
     minimalDeposit = _minimalDeposit;
     tokenAddress = _tokenAddress;
-    stakeholderShare[1] = 4;
-    stakeholderShare[2] = 95;
-    stakeholderShare[4] = 1;
+    stakeholderShare[1] = 40000000000000000;
+    stakeholderShare[2] = 950000000000000000;
+    stakeholderShare[4] = 10000000000000000;
   }
 
 
