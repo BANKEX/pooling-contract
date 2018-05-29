@@ -51,5 +51,7 @@ contract ShareStoreTest is ShareStore, TimeMachineT {
   function getState_() internal view returns (uint8) {
     return state_;
   }
+  
+
 
 }

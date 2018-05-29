@@ -337,14 +337,29 @@ contract('ShareStore COMMON TEST', (accounts) => {
         // });
 
         //  Problem with parts
-
+        assert.equal(1,2, "Problem with parts need to make functions for it!")
     });
 
     it("should allow to take stakeholders parts after wait for ico", async function () {
-
+        // not ready
+        assert.equal(1,2, "Problem with parts need to make functions for it!")
     });
 
     it("should allow to make refund during raising", async function () {
+        const gasPrice = tw("3e-7");
+        let tokenLocal = await Token.new(TOKEN_SUPPLY);
+        let shareLocal = await ShareStoreTest.new(MINIMAL_DEPOSIT_SIZE, tokenLocal.address);
+        await shareLocal.setRoleTestData(RL_POOL_MANAGER, accounts[0]);
+        await shareLocal.setState(ST_RAISING, {from: accounts[0]});
+        assert(ST_RAISING.eq(await shareLocal.getState()));
+        for (let i = 3; i < 10; i++) {
+            await shareLocal.sendTransaction({value: INVESTOR_SUM_PAY, from: accounts[i]});
+        }
+
+        for (let i = 3; i < 10; i++) {
+            await shareLocal.sendTransaction({value: INVESTOR_SUM_PAY, from: accounts[i]});
+        }
+
     });
 
     it("should allow to release ether and tokens by force from admin", async function () {
