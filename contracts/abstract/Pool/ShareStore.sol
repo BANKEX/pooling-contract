@@ -147,28 +147,28 @@ contract ShareStore is IRoleModel, IShareStore, IStateModel {
 
   function releaseEther(uint _value) external returns(bool) {
     uint8 _state = getState_();
-    require((_state == ST_MONEY_BACK) || (_state == ST_TOKEN_DISTRIBUTION));
+    require(_state == ST_TOKEN_DISTRIBUTION);
     return releaseEther_(msg.sender, _value);
   }
 
   function releaseEtherForce(address _for, uint _value) external returns(bool) {
     uint8 _role = getRole_();
     uint8 _state = getState_();
-    require((_state == ST_MONEY_BACK) || (_state == ST_TOKEN_DISTRIBUTION));
+    require(_state == ST_TOKEN_DISTRIBUTION);
     require((_role==RL_ADMIN) || (_role==RL_PAYBOT));
     return releaseEther_(_for, _value);
   }
 
   function releaseToken(uint _value) external returns(bool) {
     uint8 _state = getState_();
-    require((_state == ST_MONEY_BACK) || (_state == ST_TOKEN_DISTRIBUTION));
+    require(_state == ST_TOKEN_DISTRIBUTION);
     return releaseToken_(msg.sender, _value);
   }
 
   function releaseTokenForce(address _for, uint _value) external returns(bool) {
     uint8 _role = getRole_();
     uint8 _state = getState_();
-    require((_state == ST_MONEY_BACK) || (_state == ST_TOKEN_DISTRIBUTION));
+    require(_state == ST_TOKEN_DISTRIBUTION);
     require((_role==RL_ADMIN) || (_role==RL_PAYBOT));
     return releaseToken_(_for, _value);
   }
