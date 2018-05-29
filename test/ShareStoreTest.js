@@ -112,9 +112,9 @@ contract('ShareStore COMMON TEST', (accounts) => {
         let allowedTokens = await tokenLocal.allowance(accounts[0], shareLocal.address);
         await shareLocal.acceptTokenFromICO(allowedTokens);
         await shareLocal.setState(ST_TOKEN_DISTRIBUTION);
-        await shareLocal.releaseToken(100, {from: accounts[4]});
-        let tokensBalance = (await tokenLocal.balanceOf(accounts[4]));
-        console.log((tokensBalance).toString())
+        let tokenBalance = await shareLocal.getBalanceTokenOf(accounts[4]);
+        await shareLocal.releaseToken(tokenBalance, {from: accounts[4]});
+        assert(tokenBalance.eq(await tokenLocal.balanceOf(accounts[4])));
     });
 
 });

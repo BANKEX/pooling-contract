@@ -21,6 +21,7 @@ contract('RoleModelTest ROLE TEST', (accounts) => {
     });
 
     it("default role of contract creator should be RL_ADMIN", async function() {
+        roleModelTest.setRole(RL_ADMIN, {from: accounts[0]});
         assert(RL_ADMIN.eq(await roleModelTest.getRole(accounts[0])));
     });
 
