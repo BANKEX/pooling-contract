@@ -4,11 +4,11 @@ import "../../abstract/Pool/StateModel.sol";
 import "../../abstract/TimeMachine/TimeMachineT.sol";
 
 contract StateModelTest is StateModel, TimeMachineT {
-  uint totalEther_;
+  uint totalShare_;
   uint8 role_;
   
-  function getTotalEther_() internal view returns(uint) {
-    return totalEther_;
+  function getTotalShare_() internal view returns(uint) {
+    return totalShare_;
   }
   
   function getRole_() internal view returns(uint8) {
@@ -28,8 +28,8 @@ contract StateModelTest is StateModel, TimeMachineT {
     return true;
   }
 
-  function setTotalEther(uint _totalEther) external returns(bool) {
-    totalEther_ = _totalEther;
+  function setTotalShare(uint _totalShare) external returns(bool) {
+    totalShare_ = _totalShare;
     return true;
   }
 

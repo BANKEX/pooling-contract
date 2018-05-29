@@ -30,17 +30,26 @@ contract ShareStore is IRoleModel, IShareStore, IStateModel {
   uint constant DECIMAL_MULTIPLIER = 1e18;
 
 
-  function getTotalEther_() internal view returns(uint){
+  function getTotalShare_() internal view returns(uint){
     return totalShare;
   }
 
+  function getEtherCollected_() internal view returns(uint){
+    return totalShare;
+  }
 
   function buyShare_(uint8 _state) internal returns(bool){
     require(_state == ST_RAISING);
     require(msg.value >= minimalDeposit);
-    share[msg.sender] = share[msg.sender].add(msg.value);
-    emit BuyShare(msg.sender, msg.value);
-    totalShare = totalShare.add(msg.value);
+    uint8 _shareRemaining = getShareRemaining_();
+    uint8 _shareAccept = (msg.value <= _shareRemaining) ? msg.value : _shareRemaining;
+
+    share[msg.sender] = share[msg.sender].add(_shareAccept);
+    totalShare = totalShare.add(_shareAccept);
+    emit BuyShare(msg.sender, _shareAccept);
+    if (msg.value!=_shareAccept) {
+      msg.sender.transfer(msg.value.sub(_shareAccept));
+    }
     return true;
   }
 
@@ -53,7 +62,7 @@ contract ShareStore is IRoleModel, IShareStore, IStateModel {
 
   function getStakeholderBalanceOf_(uint8 _for) internal view returns (uint){
     if (_for == RL_ICO_MANAGER) {
-      return getTotalEther_().mul(stakeholderShare[_for]).div(DECIMAL_MULTIPLIER).sub(stakeholderEtherReleased_[_for]);
+      return getEtherCollected_().mul(stakeholderShare[_for]).div(DECIMAL_MULTIPLIER).sub(stakeholderEtherReleased_[_for]);
     }
 
     if ((_for == RL_POOL_MANAGER) || (_for == RL_ADMIN)) {
@@ -77,7 +86,7 @@ contract ShareStore is IRoleModel, IShareStore, IStateModel {
 
   function getBalanceEtherOf_(address _for) internal view returns (uint) {
     uint _stakeholderTotalEtherReserved = stakeholderEtherReleased_[RL_ICO_MANAGER].mul(DECIMAL_MULTIPLIER).div(stakeholderShare[RL_ICO_MANAGER]);
-    uint _restEther = getTotalEther_().sub(_stakeholderTotalEtherReserved);
+    uint _restEther = getEtherCollected_().sub(_stakeholderTotalEtherReserved);
     return _restEther.mul(share[_for]).div(totalShare).sub(etherReleased_[_for]);
   }
 
@@ -147,28 +156,28 @@ contract ShareStore is IRoleModel, IShareStore, IStateModel {
 
   function releaseEther(uint _value) external returns(bool) {
     uint8 _state = getState_();
-    require((_state == ST_MONEY_BACK) || (_state == ST_TOKEN_DISTRIBUTION));
+    require(_state == ST_TOKEN_DISTRIBUTION);
     return releaseEther_(msg.sender, _value);
   }
 
   function releaseEtherForce(address _for, uint _value) external returns(bool) {
     uint8 _role = getRole_();
     uint8 _state = getState_();
-    require((_state == ST_MONEY_BACK) || (_state == ST_TOKEN_DISTRIBUTION));
+    require(_state == ST_TOKEN_DISTRIBUTION);
     require((_role==RL_ADMIN) || (_role==RL_PAYBOT));
     return releaseEther_(_for, _value);
   }
 
   function releaseToken(uint _value) external returns(bool) {
     uint8 _state = getState_();
-    require((_state == ST_MONEY_BACK) || (_state == ST_TOKEN_DISTRIBUTION));
+    require(_state == ST_TOKEN_DISTRIBUTION);
     return releaseToken_(msg.sender, _value);
   }
 
   function releaseTokenForce(address _for, uint _value) external returns(bool) {
     uint8 _role = getRole_();
     uint8 _state = getState_();
-    require((_state == ST_MONEY_BACK) || (_state == ST_TOKEN_DISTRIBUTION));
+    require(_state == ST_TOKEN_DISTRIBUTION);
     require((_role==RL_ADMIN) || (_role==RL_PAYBOT));
     return releaseToken_(_for, _value);
   }

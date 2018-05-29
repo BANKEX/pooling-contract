@@ -2,7 +2,7 @@ pragma solidity ^0.4.23;
 
 
 contract IShareStore{
-  function getTotalEther_() internal view returns(uint);
+  function getTotalShare_() internal view returns(uint);
 
   event BuyShare(address indexed addr, uint value);
   event RefundShare(address indexed addr, uint value);

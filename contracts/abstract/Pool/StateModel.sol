@@ -4,10 +4,11 @@ import "../TimeMachine/ITimeMachine.sol";
 import "./IStateModel.sol";
 import "./IRoleModel.sol";
 import "./IShareStore.sol";
-
+import "../../libs/math/SafeMath.sol";
 
 
 contract StateModel is IRoleModel, IShareStore, IStateModel, ITimeMachine {
+  using SafeMath for uint;
   uint public launchTimestamp;
 
   uint public raisingPeriod;
@@ -18,6 +19,11 @@ contract StateModel is IRoleModel, IShareStore, IStateModel, ITimeMachine {
   uint public maximalFundSize;
   
   uint8 internal initialState_;
+
+  function getShareRemaining_() internal view returns(uint8)
+  {
+    return maximalFundSize.sub(getTotalShare_());
+  }
  
   function getTimeState_() internal view returns (uint8) {
     uint _launchTimestamp = launchTimestamp;
@@ -34,7 +40,7 @@ contract StateModel is IRoleModel, IShareStore, IStateModel, ITimeMachine {
   }
 
   function getRaisingState_() internal view returns(uint8) {
-    uint _totalEther = getTotalEther_();
+    uint _totalEther = getTotalShare_();
     if (_totalEther < minimalFundSize) 
       return RST_NOT_COLLECTED;
     if (_totalEther < maximalFundSize)
