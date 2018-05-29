@@ -54,7 +54,7 @@ contract('StateModelTest COMMON TEST', (accounts) => {
     let stateModelTestLocal = await StateModelTest.new(RAISING_PERIOD, ICO_PERIOD, DISTRIBUTION_PERIOD, MINIMAL_FUND_SIZE, MAXIMAL_FUND_SIZE);
     await stateModelTestLocal.setRole(RL_POOL_MANAGER);
     await stateModelTestLocal.setState(ST_RAISING);
-    await stateModelTestLocal.setTotalEther(tw(100));
+    await stateModelTestLocal.setTotalShare(tw(100));
     await stateModelTestLocal.incTimestamp(RAISING_PERIOD);
     assert(ST_WAIT_FOR_ICO.eq(await stateModelTestLocal.getState()));
   });
@@ -62,7 +62,7 @@ contract('StateModelTest COMMON TEST', (accounts) => {
   it("when pool is not collected during RAISING_PERIOD state should be ST_MONEY_BACK", async function() {
     await stateModelTest.setRole(RL_POOL_MANAGER);
     await stateModelTest.setState(ST_RAISING);
-    await stateModelTest.setTotalEther(tw(10));
+    await stateModelTest.setTotalShare(tw(10));
     await stateModelTest.incTimestamp(RAISING_PERIOD);
     assert(ST_MONEY_BACK.eq(await stateModelTest.getState()));
   });
@@ -71,7 +71,7 @@ contract('StateModelTest COMMON TEST', (accounts) => {
     let stateModelTestLocal = await StateModelTest.new(RAISING_PERIOD, ICO_PERIOD, DISTRIBUTION_PERIOD, MINIMAL_FUND_SIZE, MAXIMAL_FUND_SIZE);
     await stateModelTestLocal.setRole(RL_POOL_MANAGER);
     await stateModelTestLocal.setState(ST_RAISING);
-    await stateModelTestLocal.setTotalEther(tw(100));
+    await stateModelTestLocal.setTotalShare(tw(100));
     await stateModelTestLocal.incTimestamp(RAISING_PERIOD);
     await stateModelTestLocal.incTimestamp(ICO_PERIOD);
     assert(ST_TOKEN_DISTRIBUTION.eq(await stateModelTestLocal.getState()));
@@ -81,7 +81,7 @@ contract('StateModelTest COMMON TEST', (accounts) => {
     let stateModelTestLocal = await StateModelTest.new(RAISING_PERIOD, ICO_PERIOD, DISTRIBUTION_PERIOD, MINIMAL_FUND_SIZE, MAXIMAL_FUND_SIZE);
     await stateModelTestLocal.setRole(RL_POOL_MANAGER);
     await stateModelTestLocal.setState(ST_RAISING);
-    await stateModelTestLocal.setTotalEther(tw(100));
+    await stateModelTestLocal.setTotalShare(tw(100));
     await stateModelTestLocal.setState(ST_WAIT_FOR_ICO);
     await stateModelTestLocal.setState(ST_TOKEN_DISTRIBUTION);
     assert(ST_TOKEN_DISTRIBUTION.eq(await stateModelTestLocal.getState()));
@@ -91,7 +91,7 @@ contract('StateModelTest COMMON TEST', (accounts) => {
     let stateModelTestLocal = await StateModelTest.new(RAISING_PERIOD, ICO_PERIOD, DISTRIBUTION_PERIOD, MINIMAL_FUND_SIZE, MAXIMAL_FUND_SIZE);
     await stateModelTestLocal.setRole(RL_POOL_MANAGER);
     await stateModelTestLocal.setState(ST_RAISING);
-    await stateModelTestLocal.setTotalEther(tw(100));
+    await stateModelTestLocal.setTotalShare(tw(100));
     await stateModelTestLocal.setState(ST_WAIT_FOR_ICO);
     await stateModelTestLocal.setState(ST_TOKEN_DISTRIBUTION);
     await stateModelTestLocal.incTimestamp(DISTRIBUTION_PERIOD);
@@ -102,7 +102,7 @@ contract('StateModelTest COMMON TEST', (accounts) => {
     let stateModelTestLocal = await StateModelTest.new(RAISING_PERIOD, ICO_PERIOD, DISTRIBUTION_PERIOD, MINIMAL_FUND_SIZE, MAXIMAL_FUND_SIZE);
     await stateModelTestLocal.setRole(RL_POOL_MANAGER);
     await stateModelTestLocal.setState(ST_RAISING);
-    await stateModelTestLocal.setTotalEther(tw(100));
+    await stateModelTestLocal.setTotalShare(tw(100));
     await stateModelTestLocal.setState(ST_WAIT_FOR_ICO);
     await stateModelTestLocal.incTimestamp(DISTRIBUTION_PERIOD);
     assert(ST_FUND_DEPRECATED.eq(await stateModelTestLocal.getState()));
@@ -123,7 +123,7 @@ contract('StateModelTest ROLE TEST POSITIVE', (accounts) => {
     let stateModelTestLocal = await StateModelTest.new(RAISING_PERIOD, ICO_PERIOD, DISTRIBUTION_PERIOD, MINIMAL_FUND_SIZE, MAXIMAL_FUND_SIZE);
     await stateModelTestLocal.setRole(RL_POOL_MANAGER);
     await stateModelTestLocal.setState(ST_RAISING);
-    await stateModelTestLocal.setTotalEther(tw(100));
+    await stateModelTestLocal.setTotalShare(tw(100));
     await stateModelTestLocal.setState(ST_WAIT_FOR_ICO);
     assert(ST_WAIT_FOR_ICO.eq(await stateModelTestLocal.getState()));
   })
@@ -132,7 +132,7 @@ contract('StateModelTest ROLE TEST POSITIVE', (accounts) => {
     let stateModelTestLocal = await StateModelTest.new(RAISING_PERIOD, ICO_PERIOD, DISTRIBUTION_PERIOD, MINIMAL_FUND_SIZE, MAXIMAL_FUND_SIZE);
     await stateModelTestLocal.setRole(RL_POOL_MANAGER);
     await stateModelTestLocal.setState(ST_RAISING);
-    await stateModelTestLocal.setTotalEther(tw(100));
+    await stateModelTestLocal.setTotalShare(tw(100));
     await stateModelTestLocal.setRole(RL_ICO_MANAGER);
     await stateModelTestLocal.setState(ST_WAIT_FOR_ICO);
     assert(ST_WAIT_FOR_ICO.eq(await stateModelTestLocal.getState()));
@@ -142,7 +142,7 @@ contract('StateModelTest ROLE TEST POSITIVE', (accounts) => {
     let stateModelTestLocal = await StateModelTest.new(RAISING_PERIOD, ICO_PERIOD, DISTRIBUTION_PERIOD, MINIMAL_FUND_SIZE, MAXIMAL_FUND_SIZE);
     await stateModelTestLocal.setRole(RL_POOL_MANAGER);
     await stateModelTestLocal.setState(ST_RAISING);
-    await stateModelTestLocal.setTotalEther(tw(100));
+    await stateModelTestLocal.setTotalShare(tw(100));
     await stateModelTestLocal.setRole(RL_POOL_MANAGER);
     await stateModelTestLocal.setState(ST_MONEY_BACK);
     assert(ST_MONEY_BACK.eq(await stateModelTestLocal.getState()));
@@ -151,7 +151,7 @@ contract('StateModelTest ROLE TEST POSITIVE', (accounts) => {
     let stateModelTestLocal = await StateModelTest.new(RAISING_PERIOD, ICO_PERIOD, DISTRIBUTION_PERIOD, MINIMAL_FUND_SIZE, MAXIMAL_FUND_SIZE);
     await stateModelTestLocal.setRole(RL_POOL_MANAGER);
     await stateModelTestLocal.setState(ST_RAISING);
-    await stateModelTestLocal.setTotalEther(tw(100));
+    await stateModelTestLocal.setTotalShare(tw(100));
     await stateModelTestLocal.setRole(RL_PAYBOT);
     await stateModelTestLocal.setState(ST_MONEY_BACK);
     assert(ST_MONEY_BACK.eq(await stateModelTestLocal.getState()));
@@ -160,7 +160,7 @@ contract('StateModelTest ROLE TEST POSITIVE', (accounts) => {
     let stateModelTestLocal = await StateModelTest.new(RAISING_PERIOD, ICO_PERIOD, DISTRIBUTION_PERIOD, MINIMAL_FUND_SIZE, MAXIMAL_FUND_SIZE);
     await stateModelTestLocal.setRole(RL_POOL_MANAGER);
     await stateModelTestLocal.setState(ST_RAISING);
-    await stateModelTestLocal.setTotalEther(tw(100));
+    await stateModelTestLocal.setTotalShare(tw(100));
     await stateModelTestLocal.setRole(RL_ADMIN);
     await stateModelTestLocal.setState(ST_MONEY_BACK);
     assert(ST_MONEY_BACK.eq(await stateModelTestLocal.getState()));
@@ -170,7 +170,7 @@ contract('StateModelTest ROLE TEST POSITIVE', (accounts) => {
     let stateModelTestLocal = await StateModelTest.new(RAISING_PERIOD, ICO_PERIOD, DISTRIBUTION_PERIOD, MINIMAL_FUND_SIZE, MAXIMAL_FUND_SIZE);
     await stateModelTestLocal.setRole(RL_POOL_MANAGER);
     await stateModelTestLocal.setState(ST_RAISING);
-    await stateModelTestLocal.setTotalEther(tw(100));
+    await stateModelTestLocal.setTotalShare(tw(100));
     await stateModelTestLocal.setState(ST_WAIT_FOR_ICO);
     await stateModelTestLocal.setRole(RL_ADMIN);
     await stateModelTestLocal.setState(ST_TOKEN_DISTRIBUTION);
@@ -181,7 +181,7 @@ contract('StateModelTest ROLE TEST POSITIVE', (accounts) => {
     let stateModelTestLocal = await StateModelTest.new(RAISING_PERIOD, ICO_PERIOD, DISTRIBUTION_PERIOD, MINIMAL_FUND_SIZE, MAXIMAL_FUND_SIZE);
     await stateModelTestLocal.setRole(RL_POOL_MANAGER);
     await stateModelTestLocal.setState(ST_RAISING);
-    await stateModelTestLocal.setTotalEther(tw(100));
+    await stateModelTestLocal.setTotalShare(tw(100));
     await stateModelTestLocal.setState(ST_WAIT_FOR_ICO);
     await stateModelTestLocal.setRole(RL_ICO_MANAGER);
     await stateModelTestLocal.setState(ST_TOKEN_DISTRIBUTION);
@@ -191,7 +191,7 @@ contract('StateModelTest ROLE TEST POSITIVE', (accounts) => {
     let stateModelTestLocal = await StateModelTest.new(RAISING_PERIOD, ICO_PERIOD, DISTRIBUTION_PERIOD, MINIMAL_FUND_SIZE, MAXIMAL_FUND_SIZE);
     await stateModelTestLocal.setRole(RL_POOL_MANAGER);
     await stateModelTestLocal.setState(ST_RAISING);
-    await stateModelTestLocal.setTotalEther(tw(100));
+    await stateModelTestLocal.setTotalShare(tw(100));
     await stateModelTestLocal.setState(ST_WAIT_FOR_ICO);
     await stateModelTestLocal.setState(ST_TOKEN_DISTRIBUTION);
     assert(ST_TOKEN_DISTRIBUTION.eq(await stateModelTestLocal.getState()));
@@ -201,7 +201,7 @@ contract('StateModelTest ROLE TEST POSITIVE', (accounts) => {
     let stateModelTestLocal = await StateModelTest.new(RAISING_PERIOD, ICO_PERIOD, DISTRIBUTION_PERIOD, MINIMAL_FUND_SIZE, MAXIMAL_FUND_SIZE);
     await stateModelTestLocal.setRole(RL_POOL_MANAGER);
     await stateModelTestLocal.setState(ST_RAISING);
-    await stateModelTestLocal.setTotalEther(tw(100));
+    await stateModelTestLocal.setTotalShare(tw(100));
     await stateModelTestLocal.setState(ST_WAIT_FOR_ICO);
     await stateModelTestLocal.setRole(RL_PAYBOT);
     await stateModelTestLocal.setState(ST_TOKEN_DISTRIBUTION);
@@ -229,7 +229,7 @@ contract('StateModelTest ROLE TEST NEGATIVE', (accounts) => {
     let stateModelTestLocal = await StateModelTest.new(RAISING_PERIOD, ICO_PERIOD, DISTRIBUTION_PERIOD, MINIMAL_FUND_SIZE, MAXIMAL_FUND_SIZE);
     await stateModelTestLocal.setRole(RL_POOL_MANAGER);
     await stateModelTestLocal.setState(ST_RAISING);
-    await stateModelTestLocal.setTotalEther(tw(100));
+    await stateModelTestLocal.setTotalShare(tw(100));
     await stateModelTestLocal.setRole(RL_ADMIN);
     try {await stateModelTestLocal.setState(ST_WAIT_FOR_ICO);} catch (err) {}
     await stateModelTestLocal.setRole(RL_PAYBOT);
@@ -243,7 +243,7 @@ contract('StateModelTest ROLE TEST NEGATIVE', (accounts) => {
     let stateModelTestLocal = await StateModelTest.new(RAISING_PERIOD, ICO_PERIOD, DISTRIBUTION_PERIOD, MINIMAL_FUND_SIZE, MAXIMAL_FUND_SIZE);
     await stateModelTestLocal.setRole(RL_POOL_MANAGER);
     try {await stateModelTestLocal.setState(ST_RAISING);} catch (err) {}
-    await stateModelTestLocal.setTotalEther(tw(100));
+    await stateModelTestLocal.setTotalShare(tw(100));
     try {await stateModelTestLocal.setState(ST_WAIT_FOR_ICO);} catch (err) {}
     await stateModelTestLocal.setRole(RL_DEFAULT);
     try {await stateModelTestLocal.setState(ST_TOKEN_DISTRIBUTION);} catch (err) {}
@@ -257,7 +257,7 @@ contract('StateModelTest TIME TEST POSITIVE', (accounts) => {
     let stateModelTestLocal = await StateModelTest.new(RAISING_PERIOD, ICO_PERIOD, DISTRIBUTION_PERIOD, MINIMAL_FUND_SIZE, MAXIMAL_FUND_SIZE);
     await stateModelTestLocal.setRole(RL_POOL_MANAGER);
     await stateModelTestLocal.setState(ST_RAISING);
-    await stateModelTestLocal.setTotalEther(tw(100));
+    await stateModelTestLocal.setTotalShare(tw(100));
     await stateModelTestLocal.incTimestamp(RAISING_PERIOD);
     assert(ST_WAIT_FOR_ICO.eq(await stateModelTestLocal.getState()));
   })
@@ -266,7 +266,7 @@ contract('StateModelTest TIME TEST POSITIVE', (accounts) => {
     let stateModelTestLocal = await StateModelTest.new(RAISING_PERIOD, ICO_PERIOD, DISTRIBUTION_PERIOD, MINIMAL_FUND_SIZE, MAXIMAL_FUND_SIZE);
     await stateModelTestLocal.setRole(RL_POOL_MANAGER);
     await stateModelTestLocal.setState(ST_RAISING);
-    await stateModelTestLocal.setTotalEther(tw(100));
+    await stateModelTestLocal.setTotalShare(tw(100));
     await stateModelTestLocal.incTimestamp(RAISING_PERIOD);
     await stateModelTestLocal.incTimestamp(ICO_PERIOD);
     assert(ST_TOKEN_DISTRIBUTION.eq(await stateModelTestLocal.getState()));
@@ -276,7 +276,7 @@ contract('StateModelTest TIME TEST POSITIVE', (accounts) => {
     let stateModelTestLocal = await StateModelTest.new(RAISING_PERIOD, ICO_PERIOD, DISTRIBUTION_PERIOD, MINIMAL_FUND_SIZE, MAXIMAL_FUND_SIZE);
     await stateModelTestLocal.setRole(RL_POOL_MANAGER);
     await stateModelTestLocal.setState(ST_RAISING);
-    await stateModelTestLocal.setTotalEther(tw(100));
+    await stateModelTestLocal.setTotalShare(tw(100));
     await stateModelTestLocal.setState(ST_WAIT_FOR_ICO);
     await stateModelTestLocal.incTimestamp(ICO_PERIOD);
     assert(ST_TOKEN_DISTRIBUTION.eq(await stateModelTestLocal.getState()));
@@ -286,7 +286,7 @@ contract('StateModelTest TIME TEST POSITIVE', (accounts) => {
     let stateModelTestLocal = await StateModelTest.new(RAISING_PERIOD, ICO_PERIOD, DISTRIBUTION_PERIOD, MINIMAL_FUND_SIZE, MAXIMAL_FUND_SIZE);
     await stateModelTestLocal.setRole(RL_POOL_MANAGER);
     await stateModelTestLocal.setState(ST_RAISING);
-    await stateModelTestLocal.setTotalEther(tw(100));
+    await stateModelTestLocal.setTotalShare(tw(100));
     await stateModelTestLocal.incTimestamp(RAISING_PERIOD);
     await stateModelTestLocal.incTimestamp(ICO_PERIOD);
     await stateModelTestLocal.incTimestamp(DISTRIBUTION_PERIOD);
@@ -297,7 +297,7 @@ contract('StateModelTest TIME TEST POSITIVE', (accounts) => {
     let stateModelTestLocal = await StateModelTest.new(RAISING_PERIOD, ICO_PERIOD, DISTRIBUTION_PERIOD, MINIMAL_FUND_SIZE, MAXIMAL_FUND_SIZE);
     await stateModelTestLocal.setRole(RL_POOL_MANAGER);
     await stateModelTestLocal.setState(ST_RAISING);
-    await stateModelTestLocal.setTotalEther(tw(100));
+    await stateModelTestLocal.setTotalShare(tw(100));
     await stateModelTestLocal.setState(ST_WAIT_FOR_ICO);
     await stateModelTestLocal.incTimestamp(ICO_PERIOD);
     await stateModelTestLocal.incTimestamp(DISTRIBUTION_PERIOD);
@@ -308,7 +308,7 @@ contract('StateModelTest TIME TEST POSITIVE', (accounts) => {
     let stateModelTestLocal = await StateModelTest.new(RAISING_PERIOD, ICO_PERIOD, DISTRIBUTION_PERIOD, MINIMAL_FUND_SIZE, MAXIMAL_FUND_SIZE);
     await stateModelTestLocal.setRole(RL_POOL_MANAGER);
     await stateModelTestLocal.setState(ST_RAISING);
-    await stateModelTestLocal.setTotalEther(tw(100));
+    await stateModelTestLocal.setTotalShare(tw(100));
     await stateModelTestLocal.setState(ST_WAIT_FOR_ICO);
     await stateModelTestLocal.setState(ST_TOKEN_DISTRIBUTION);
     await stateModelTestLocal.incTimestamp(DISTRIBUTION_PERIOD);
@@ -323,7 +323,7 @@ contract('StateModelTest TIME TEST NEGATIVE', (accounts) => {
     let stateModelTestLocal = await StateModelTest.new(RAISING_PERIOD, ICO_PERIOD, DISTRIBUTION_PERIOD, MINIMAL_FUND_SIZE, MAXIMAL_FUND_SIZE);
     await stateModelTestLocal.setRole(RL_POOL_MANAGER);
     await stateModelTestLocal.setState(ST_RAISING);
-    await stateModelTestLocal.setTotalEther(tw(1));
+    await stateModelTestLocal.setTotalShare(tw(1));
     await stateModelTestLocal.incTimestamp(RAISING_PERIOD);
     assert(ST_MONEY_BACK.eq(await stateModelTestLocal.getState()));
   })
