@@ -45,6 +45,9 @@ contract StateModelTest is StateModel, TimeMachineT {
     return getRaisingState_();
   }
   
+  
+  
+  
   constructor(uint _raisingPeriod, uint _icoPeriod, uint _distributionPeriod, uint _minimalFundSize, uint _maximalFundSize) public {
     raisingPeriod = _raisingPeriod;
     icoPeriod = _icoPeriod;

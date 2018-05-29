@@ -10,8 +10,10 @@ contract ShareStoreTest is ShareStore, TimeMachineT {
 
 
   uint8 internal state_;
+  uint maximalFundSize;
 
   constructor(uint _minimalDeposit, address _tokenAddress) public {
+    maximalFundSize = 1000000000000000000000;
     minimalDeposit = _minimalDeposit;
     tokenAddress = _tokenAddress;
     stakeholderShare[1] = 40000000000000000;
@@ -52,6 +54,11 @@ contract ShareStoreTest is ShareStore, TimeMachineT {
     return state_;
   }
   
-
-
+  function getShareRemaining_() internal view returns(uint)
+  {
+    return maximalFundSize.sub(getTotalShare_());
+  }
+  
+  
+  
 }

@@ -439,7 +439,7 @@ contract('ShareStore COMMON TEST', (accounts) => {
         let allowedTokens = await tokenLocal.allowance(accounts[0], shareLocal.address);
         await shareLocal.acceptTokenFromICO(allowedTokens);
         await shareLocal.setState(ST_TOKEN_DISTRIBUTION);
-
+        assert(ST_TOKEN_DISTRIBUTION.eq(await shareLocal.getState()), "DISTRIBUTION ERROR");
         let balancesBefore = [];
         balancesBefore.push(0);
         balancesBefore.push(0);
@@ -450,47 +450,9 @@ contract('ShareStore COMMON TEST', (accounts) => {
             balancesBefore.push(bb);
         }
 
-        let feeFirst = [];
-        feeFirst.push(0);
-        feeFirst.push(0);
-        feeFirst.push(0);
+        await shareLocal.sendTransaction({value: INVESTOR_SUM_PAY, from: accounts[1]});
 
-        let allowedSum = [];
-        allowedSum.push(0);
-        allowedSum.push(0);
-        allowedSum.push(0);
-
-        let allowedTokensOF = [];
-        allowedTokensOF.push(0);
-        allowedTokensOF.push(0);
-        allowedTokensOF.push(0);
-
-        for (let i = 3; i < 10; i++) {
-            let tb = await shareLocal.getBalanceTokenOf(accounts[i]);
-            let eb = await shareLocal.getBalanceEtherOf(accounts[i]);
-            allowedSum.push(eb);
-            allowedTokensOF.push(tb);
-        }
-
-        for (let i = 3; i < 10; i++) {
-            let instnace = await shareLocal.sendTransaction({value: INVESTOR_SUM_TO_TRIGGER, from: accounts[i]});
-            feeFirst.push(instnace.receipt.gasUsed * gasPrice);
-        }
-
-        let balancesAfter = [];
-        balancesAfter.push(0);
-        balancesAfter.push(0);
-        balancesAfter.push(0);
-
-        for (let i = 3; i < 10; i++) {
-            let bb = await web3.eth.getBalance(accounts[i]);
-            balancesAfter.push(bb);
-        }
-
-        for (let i = 3; i < 7; i++) {
-            assert(((balancesAfter[i]).plus(feeFirst[i])).eq((balancesBefore[i]).plus(allowedSum[i])));
-            assert((await tokenLocal.balanceOf(accounts[i])).eq(allowedTokensOF[i]));
-        }
+        assert((await tokenLocal.balanceOf(accounts[1])).eq(await shareLocal.getBalanceTokenOf(accounts[1])));
 
     });
 
