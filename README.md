@@ -4,7 +4,7 @@ See documentation at https://bankex.github.io/pooling-contract/
 
 Testing contract /contracts/testing/PoolTest/PoolTest.sol
 
-Release candidate contract /contracts/testing/PoolTest/PoolTest.sol
+Release candidate contract /contracts/production/PoolProd/PoolProd.sol
 
 ## Tests
 
