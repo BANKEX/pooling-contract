@@ -27,10 +27,6 @@ contract RoleModel is IRoleModel{
     return roleAddress_[_for];
   }
 
-  constructor () public {
-    setRole_(RL_ADMIN, msg.sender);
-  }
-
   function getRole(address _targetAddress) external view returns(uint8){
     return role_[_targetAddress];
   }

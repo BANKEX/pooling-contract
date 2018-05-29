@@ -1,9 +1,9 @@
 pragma solidity ^0.4.23;
 
 import "../../abstract/Pool/Pool.sol";
-import "../../abstract/TimeMachine/TimeMachineT.sol";
+import "../../abstract/TimeMachine/TimeMachineP.sol";
 
-contract PoolProd is Pool, TimeMachineT {
+contract PoolProd is Pool, TimeMachineP {
   uint constant DECIMAL_MULTIPLIER = 1e18;
   
   constructor(uint _raisingPeriod, 
