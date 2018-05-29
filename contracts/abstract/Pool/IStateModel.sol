@@ -19,5 +19,5 @@ contract IStateModel {
   uint8 constant RST_FULL = 0x04;
 
   function getState_() internal view returns (uint8);
-  function getShareRemaining_() internal view returns(uint8);
+  function getShareRemaining_() internal view returns(uint);
 }

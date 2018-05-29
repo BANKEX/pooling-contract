@@ -41,8 +41,8 @@ contract ShareStore is IRoleModel, IShareStore, IStateModel {
   function buyShare_(uint8 _state) internal returns(bool) {
     require(_state == ST_RAISING);
     require(msg.value >= minimalDeposit);
-    uint8 _shareRemaining = getShareRemaining_();
-    uint8 _shareAccept = (msg.value <= _shareRemaining) ? msg.value : _shareRemaining;
+    uint _shareRemaining = getShareRemaining_();
+    uint _shareAccept = (msg.value <= _shareRemaining) ? msg.value : _shareRemaining;
 
     share[msg.sender] = share[msg.sender].add(_shareAccept);
     totalShare = totalShare.add(_shareAccept);

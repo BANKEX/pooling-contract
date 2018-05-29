@@ -20,7 +20,7 @@ contract StateModel is IRoleModel, IShareStore, IStateModel, ITimeMachine {
   
   uint8 internal initialState_;
 
-  function getShareRemaining_() internal view returns(uint8)
+  function getShareRemaining_() internal view returns(uint)
   {
     return maximalFundSize.sub(getTotalShare_());
   }
