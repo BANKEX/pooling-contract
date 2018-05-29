@@ -206,12 +206,16 @@ contract ShareStore is IRoleModel, IShareStore, IStateModel {
 
     if (_state == ST_MONEY_BACK) {
       refundShare_(msg.sender, share[msg.sender]);
+      if(msg.value > 0)
+        msg.sender.transfer(msg.value);
       return;
     }
 
     if (_state == ST_TOKEN_DISTRIBUTION) {
       releaseEther_(msg.sender, getBalanceEtherOf_(msg.sender));
       releaseToken_(msg.sender, getBalanceTokenOf_(msg.sender));
+      if(msg.value > 0)
+        msg.sender.transfer(msg.value);
       return;
     }
     revert();
