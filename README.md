@@ -1,6 +1,10 @@
-## WIP. Not for production usage.
+## WIP. Not for production usage. This is slill alpha.
 
-See documentation at https://bankex.github.io/
+See documentation at https://bankex.github.io/pooling-contract/
+
+Testing contract /contracts/testing/PoolTest/PoolTest.sol
+
+Release candidate contract /contracts/production/PoolProd/PoolProd.sol
 
 ## Tests
 
