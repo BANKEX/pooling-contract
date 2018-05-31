@@ -91,7 +91,7 @@ contract ShareStore is IRoleModel, IShareStore, IStateModel {
   }
 
   function getBalanceTokenOf_(address _for) internal view returns (uint) {
-    return totalToken.mul(share[_for]).div(totalShare).sub(etherReleased_[_for]);
+    return totalToken.mul(share[_for]).div(totalShare).sub(tokenReleased_[_for]);
   }
 
   function releaseEther_(address _for, uint _value) internal returns (bool) {
