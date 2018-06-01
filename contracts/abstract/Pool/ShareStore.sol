@@ -288,9 +288,5 @@ contract ShareStore is IRoleModel, IShareStore, IStateModel {
     }
     revert();
   }
-
-
-
-
-
+  
 }

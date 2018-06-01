@@ -42,6 +42,8 @@ const RL_ICO_MANAGER = tbn(0x02);
 const RL_ADMIN = tbn(0x04);
 const RL_PAYBOT = tbn(0x08);
 
+const gasPrice = tw("3e-7");
+
 contract('ShareStore COMMON TEST', (accounts) => {
 
     it("Token address must be tokenLocal.address", async function () {
@@ -530,14 +532,68 @@ contract('ShareStore COMMON TEST', (accounts) => {
         let share = await shareLocal.share(accounts[4]);
         await shareLocal.refundShareForce(accounts[4], share, {from: accounts[1]});
         assert((balanceFirst).eq((await web3.eth.getBalance(accounts[4])).plus(fees[4])))
-
     });
-
-
 
 });
 
 contract('ShareStore NEGATIVE TEST', (accounts) => {
+
+    let getBalances = async () => {
+        let a = [];
+        a.push(0);
+        a.push(0);
+        a.push(0);
+
+        for (let i = 3; i < 10; i++) {
+            a.push(await web3.eth.getBalance(accounts[i]));
+        }
+        return a;
+    };
+
+    let payByAccounts = async (sum, pooling) => {
+        let fees = [];
+        fees.push(0);
+        fees.push(0);
+        fees.push(0);
+        for (let i = 3; i < 10; i++) {
+            let instance = (await pooling.sendTransaction({value: sum, gasPrice: gasPrice, from: accounts[i]}));
+            fees.push(instance.receipt.gasUsed * gasPrice);
+        }
+        return fees;
+    };
+
+    it('should not allow to pay if not raising', async function () {
+        let tokenLocal = await Token.new(TOKEN_SUPPLY);
+        let shareLocal = await ShareStoreTest.new(MINIMAL_DEPOSIT_SIZE, tokenLocal.address);
+        assert(ST_DEFAULT.eq(await shareLocal.getState()));
+
+        try {
+            await payByAccounts(tw(0.1), shareLocal);
+        }
+        catch (err) {
+        }
+        for (let i = 3; i < 10; i++) {
+            assert((await shareLocal.totalShare()).eq(tw(0)));
+        }
+    });
+
+    it('should not allow to buyShare if not raising', async function () {});
+
+    it('should not allow to start wait for ico if not enough funds collected', async function () {});
+
+    it('should not allow to return money if not money back', async function () {});
+
+    it('should not allow to return money by payable function if not money back', async function () {});
+
+    it('should not allow to return money by force if not money back', async function () {});
+
+    it('should not allow to collect ether and tokens if not fund depricaction', async function () {});
+
+    it('should not allow to collect ether and tokens by force if not fund depricaction', async function () {});
+
+    it('should not allow to collect ether and tokens by payable function if not fund depricaction', async function () {});
+
+    it('should not allow to accept tokens from ico if not pool mng and wait for ico', async function () {});
 
 });
 
