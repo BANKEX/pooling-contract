@@ -577,23 +577,166 @@ contract('ShareStore NEGATIVE TEST', (accounts) => {
         }
     });
 
-    it('should not allow to buyShare if not raising', async function () {});
+    it('should not allow to buyShare if not raising', async function () {
+        let tokenLocal = await Token.new(TOKEN_SUPPLY);
+        let shareLocal = await ShareStoreTest.new(MINIMAL_DEPOSIT_SIZE, tokenLocal.address);
+        assert(ST_DEFAULT.eq(await shareLocal.getState()));
+        try {
+            for (let i = 3; i < 10; i++) {
+                await shareLocal.buyShare({from: accounts[i], value: INVESTOR_SUM_PAY, gasPrice: gasPrice});
+            }
+        }
+        catch (err) {
+        }
+        for (let i = 3; i < 10; i++) {
+            assert((await shareLocal.totalShare()).eq(tw(0)));
+        }
+    });
 
-    it('should not allow to start wait for ico if not enough funds collected', async function () {});
 
-    it('should not allow to return money if not money back', async function () {});
+    it('should not allow to return money if not money back', async function () {
+        let tokenLocal = await Token.new(TOKEN_SUPPLY);
+        let shareLocal = await ShareStoreTest.new(MINIMAL_DEPOSIT_SIZE, tokenLocal.address);
+        assert(ST_DEFAULT.eq(await shareLocal.getState()));
+        await shareLocal.setRoleTestData(RL_POOL_MANAGER, accounts[0]);
+        await shareLocal.setState(ST_RAISING, {from: accounts[0]});
+        assert(ST_RAISING.eq(await shareLocal.getState()));
+        await payByAccounts(tw(0.1), shareLocal);
+        let balanceBefore = [];
+        balanceBefore.push(0);
+        balanceBefore.push(0);
+        balanceBefore.push(0);
+        for (let i = 3; i < 10; i++) {
+            balanceBefore.push(await shareLocal.getBalanceEtherOf(accounts[i]));
+        }
+        try {
+            for (let i = 3; i < 10; i++) {
+                let balanceETH = await shareLocal.getBalanceEtherOf(accounts[i]);
+                await shareLocal.refundShare(balanceETH, {from: accounts[i], gasPrice: gasPrice})
+            }
+        }
+        catch (err) {
+        }
+        for (let i = 3; i < 10; i++) {
+            let balanceNow = await shareLocal.getBalanceEtherOf(accounts[i]);
+            assert(balanceNow.eq(balanceBefore[i]));
+        }
+    });
 
-    it('should not allow to return money by payable function if not money back', async function () {});
 
-    it('should not allow to return money by force if not money back', async function () {});
+    it('should not allow to collect ether and tokens if not fund depricaction', async function () {
+        let tokenLocal = await Token.new(TOKEN_SUPPLY);
+        let shareLocal = await ShareStoreTest.new(MINIMAL_DEPOSIT_SIZE, tokenLocal.address);
+        assert(ST_DEFAULT.eq(await shareLocal.getState()));
+        await shareLocal.setRoleTestData(RL_POOL_MANAGER, accounts[0]);
+        await shareLocal.setState(ST_RAISING, {from: accounts[0]});
+        assert(ST_RAISING.eq(await shareLocal.getState()));
 
-    it('should not allow to collect ether and tokens if not fund depricaction', async function () {});
+        await payByAccounts(tw(0.1), shareLocal);
+        await shareLocal.setRoleTestData(RL_ICO_MANAGER, accounts[0]);
+        await shareLocal.setState(ST_WAIT_FOR_ICO, {from: accounts[0]});
+        await shareLocal.releaseEtherToStakeholder(100000, {
+            gasPrice: gasPrice
+        });
+        await tokenLocal.approve(shareLocal.address, TOKEN_SUPPLY, {from: accounts[0]});
+        let allowedTokens = await tokenLocal.allowance(accounts[0], shareLocal.address);
+        await shareLocal.acceptTokenFromICO(allowedTokens);
+        try {
+            for (let i = 3; i < 7; i++) {
+                let tb = await shareLocal.getBalanceTokenOf(accounts[i]);
+                let instnace1 = await shareLocal.releaseToken(tb, {from: accounts[i], gasPrice: gasPrice});
+                let eb = await shareLocal.getBalanceEtherOf(accounts[i]);
+                let instnace2 = await shareLocal.releaseEther(eb, {from: accounts[i], gasPrice: gasPrice});
+                let gasUsedTwo = instnace1.receipt.gasUsed + instnace2.receipt.gasUsed;
+            }
+        }
+        catch (err) {
+        }
+        assert((await tokenLocal.balanceOf(accounts[4])).eq(tw(0)));
+    });
 
-    it('should not allow to collect ether and tokens by force if not fund depricaction', async function () {});
+    it('should not allow to collect ether and tokens by force if not fund depricaction', async function () {
+        let tokenLocal = await Token.new(TOKEN_SUPPLY);
+        let shareLocal = await ShareStoreTest.new(MINIMAL_DEPOSIT_SIZE, tokenLocal.address);
+        assert(ST_DEFAULT.eq(await shareLocal.getState()));
+        await shareLocal.setRoleTestData(RL_POOL_MANAGER, accounts[0]);
+        await shareLocal.setState(ST_RAISING, {from: accounts[0]});
+        assert(ST_RAISING.eq(await shareLocal.getState()));
 
-    it('should not allow to collect ether and tokens by payable function if not fund depricaction', async function () {});
+        await payByAccounts(tw(0.1), shareLocal);
+        await shareLocal.setRoleTestData(RL_ICO_MANAGER, accounts[0]);
+        await shareLocal.setState(ST_WAIT_FOR_ICO, {from: accounts[0]});
+        await shareLocal.releaseEtherToStakeholder(100000, {
+            gasPrice: gasPrice
+        });
+        await tokenLocal.approve(shareLocal.address, TOKEN_SUPPLY, {from: accounts[0]});
+        let allowedTokens = await tokenLocal.allowance(accounts[0], shareLocal.address);
+        await shareLocal.acceptTokenFromICO(allowedTokens);
+        await shareLocal.setRoleTestData(RL_ADMIN, accounts[0]);
+        try {
+            for (let i = 3; i < 7; i++) {
+                let tb = await shareLocal.getBalanceTokenOf(accounts[i]);
+                let instnace1 = await shareLocal.releaseTokenForce(accounts[i], tb, {
+                    from: accounts[0],
+                    gasPrice: gasPrice
+                });
+                let eb = await shareLocal.getBalanceEtherOf(accounts[i]);
+                let instnace2 = await shareLocal.releaseEtherForce(accounts[i], eb, {
+                    from: accounts[0],
+                    gasPrice: gasPrice
+                });
+                let gasUsedTwo = instnace1.receipt.gasUsed + instnace2.receipt.gasUsed;
+            }
+        }
+        catch (err) {
+        }
+        assert((await tokenLocal.balanceOf(accounts[4])).eq(tw(0)));
+    });
 
-    it('should not allow to accept tokens from ico if not pool mng and wait for ico', async function () {});
+    it('should not allow to accept tokens from ico if not pool mng and wait for ico', async function () {
+        let tokenLocal = await Token.new(TOKEN_SUPPLY);
+        let shareLocal = await ShareStoreTest.new(MINIMAL_DEPOSIT_SIZE, tokenLocal.address);
+        assert(ST_DEFAULT.eq(await shareLocal.getState()));
+        await shareLocal.setRoleTestData(RL_POOL_MANAGER, accounts[0]);
+        await shareLocal.setState(ST_RAISING, {from: accounts[0]});
+        assert(ST_RAISING.eq(await shareLocal.getState()));
+
+        await payByAccounts(tw(0.1), shareLocal);
+        await shareLocal.setRoleTestData(RL_ICO_MANAGER, accounts[0]);
+        await shareLocal.setState(ST_WAIT_FOR_ICO, {from: accounts[0]});
+        await shareLocal.releaseEtherToStakeholder(100000, {
+            gasPrice: gasPrice
+        });
+        await tokenLocal.approve(shareLocal.address, TOKEN_SUPPLY, {from: accounts[0]});
+        let allowedTokens = await tokenLocal.allowance(accounts[0], shareLocal.address);
+
+        await shareLocal.setRoleTestData(RL_POOL_MANAGER, accounts[0]);
+        try {
+            await shareLocal.acceptTokenFromICO(allowedTokens);
+        }
+        catch (e) {
+        }
+        await shareLocal.setRoleTestData(RL_DEFAULT, accounts[0]);
+        try {
+            await shareLocal.acceptTokenFromICO(allowedTokens);
+        }
+        catch (e) {
+        }
+        await shareLocal.setRoleTestData(RL_PAYBOT, accounts[0]);
+        try {
+            await shareLocal.acceptTokenFromICO(allowedTokens);
+        }
+        catch (e) {
+        }
+        await shareLocal.setRoleTestData(RL_ADMIN, accounts[0]);
+        try {
+            await shareLocal.acceptTokenFromICO(allowedTokens);
+        }
+        catch (e) {
+        }
+
+        assert((await shareLocal.totalToken()).eq(tw(0)));
+    });
 
 });
 
