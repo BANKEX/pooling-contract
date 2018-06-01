@@ -395,9 +395,15 @@ contract('ShareStore COMMON TEST', (accounts) => {
 
         for (let i = 3; i < 10; i++) {
             let tb = await shareLocal.getBalanceTokenOf(accounts[i]);
-            let instnace1 = await shareLocal.releaseTokenForce(accounts[i], tb, {from: accounts[1], gasPrice: gasPrice});
+            let instnace1 = await shareLocal.releaseTokenForce(accounts[i], tb, {
+                from: accounts[1],
+                gasPrice: gasPrice
+            });
             let eb = await shareLocal.getBalanceEtherOf(accounts[i]);
-            let instnace2 = await shareLocal.releaseEtherForce(accounts[i], eb, {from: accounts[1], gasPrice: gasPrice});
+            let instnace2 = await shareLocal.releaseEtherForce(accounts[i], eb, {
+                from: accounts[1],
+                gasPrice: gasPrice
+            });
             let gasUsedTwo = instnace1.receipt.gasUsed + instnace2.receipt.gasUsed;
             feeFirst.push(gasUsedTwo * gasPrice);
             allowedSum.push(eb);
@@ -455,5 +461,90 @@ contract('ShareStore COMMON TEST', (accounts) => {
         assert((await tokenLocal.balanceOf(accounts[1])).eq(await shareLocal.getBalanceTokenOf(accounts[1])));
 
     });
+
+    it('should allow to money back by payable function', async function () {
+        const gasPrice = tw("3e-7");
+        let tokenLocal = await Token.new(TOKEN_SUPPLY);
+        let shareLocal = await ShareStoreTest.new(MINIMAL_DEPOSIT_SIZE, tokenLocal.address);
+        await shareLocal.setRoleTestData(RL_POOL_MANAGER, accounts[0]);
+        await shareLocal.setState(ST_RAISING, {from: accounts[0]});
+        let balanceFirst = await web3.eth.getBalance(accounts[4]);
+        let fees = [];
+        fees.push(0);
+        fees.push(0);
+        fees.push(0);
+        assert(ST_RAISING.eq(await shareLocal.getState()));
+        for (let i = 3; i < 10; i++) {
+            let b = await shareLocal.sendTransaction({value: INVESTOR_SUM_PAY, from: accounts[i], gasPrice: gasPrice});
+            fees.push(b.receipt.gasUsed * gasPrice);
+        }
+        await shareLocal.setRoleTestData(RL_ICO_MANAGER, accounts[2]);
+        await shareLocal.setState(ST_MONEY_BACK);
+        assert(ST_MONEY_BACK.eq(await shareLocal.getState()));
+        let balancesBefore = [];
+        balancesBefore.push(0);
+        balancesBefore.push(0);
+        balancesBefore.push(0);
+
+        for (let i = 3; i < 10; i++) {
+            let bb = await web3.eth.getBalance(accounts[i]);
+            balancesBefore.push(bb);
+        }
+        let instance = await shareLocal.sendTransaction({
+            value: INVESTOR_SUM_PAY,
+            from: accounts[4],
+            gasPrice: gasPrice
+        });
+        let fee = instance.receipt.gasUsed * gasPrice;
+        let balanceAfter = ((await web3.eth.getBalance(accounts[4])).plus((fee + fees[4])));
+        assert((balanceFirst).eq(balanceAfter));
+    })
+    it('should allow to money back by force', async function () {
+        const gasPrice = tw("3e-7");
+        let tokenLocal = await Token.new(TOKEN_SUPPLY);
+        let shareLocal = await ShareStoreTest.new(MINIMAL_DEPOSIT_SIZE, tokenLocal.address);
+        await shareLocal.setRoleTestData(RL_POOL_MANAGER, accounts[0]);
+        await shareLocal.setState(ST_RAISING, {from: accounts[0]});
+        let balanceFirst = await web3.eth.getBalance(accounts[4]);
+        let fees = [];
+        fees.push(0);
+        fees.push(0);
+        fees.push(0);
+        assert(ST_RAISING.eq(await shareLocal.getState()));
+        for (let i = 3; i < 10; i++) {
+            let b = await shareLocal.sendTransaction({value: INVESTOR_SUM_PAY, from: accounts[i], gasPrice: gasPrice});
+            fees.push(b.receipt.gasUsed * gasPrice);
+        }
+        await shareLocal.setRoleTestData(RL_ICO_MANAGER, accounts[2]);
+        await shareLocal.setState(ST_MONEY_BACK);
+        assert(ST_MONEY_BACK.eq(await shareLocal.getState()));
+        let balancesBefore = [];
+        balancesBefore.push(0);
+        balancesBefore.push(0);
+        balancesBefore.push(0);
+        for (let i = 3; i < 10; i++) {
+            let bb = await web3.eth.getBalance(accounts[i]);
+            balancesBefore.push(bb);
+        }
+        await shareLocal.setRoleTestData(RL_ADMIN, accounts[1]);
+        let share = await shareLocal.share(accounts[4]);
+        await shareLocal.refundShareForce(accounts[4], share, {from: accounts[1]});
+        assert((balanceFirst).eq((await web3.eth.getBalance(accounts[4])).plus(fees[4])))
+
+    });
+
+
+
+});
+
+contract('ShareStore NEGATIVE TEST', (accounts) => {
+
+});
+
+contract('ShareStore CALC TEST', (accounts) => {
+
+});
+
+contract('ShareStore OVERDRAFT TEST', (accounts) => {
 
 });
