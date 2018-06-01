@@ -10,26 +10,43 @@ import "../../libs/token/ERC20/IERC20.sol";
 
 contract ShareStore is IRoleModel, IShareStore, IStateModel {
   using SafeMath for uint;
+  
+  /**
+  * @dev minimal amount of ETH in wei which is allowed to become investor
+  */
   uint public minimalDeposit;
-
-
+  
+  /**
+  * @dev address of ERC20 token of ICO
+  */
   address public tokenAddress;
-
+  
+  /**
+  * @dev investors balance which they have if they sent ETH during RAISING state
+  */
   mapping (address=>uint) public share;
-  mapping (address=>uint) internal etherReleased_;
-  mapping (address=>uint) internal tokenReleased_;
-
+  
+  /**
+  * @dev total amount of ETH collected from investors  in wei
+  */
   uint public totalShare;
+  
+  /**
+  * @dev total amount of tokens collected from ERC20 contract
+  */
   uint public totalToken;
   
+  /**
+  * @dev total amount of ETH which stake holder can get
+  */
   mapping (uint8=>uint) public stakeholderShare;
+  
+  mapping (address=>uint) internal etherReleased_;
+  mapping (address=>uint) internal tokenReleased_;
   mapping (uint8=>uint) internal stakeholderEtherReleased_;
 
-
-
   uint constant DECIMAL_MULTIPLIER = 1e18;
-
-
+  
   function getTotalShare_() internal view returns(uint){
     return totalShare;
   }
@@ -264,7 +281,6 @@ contract ShareStore is IRoleModel, IShareStore, IStateModel {
     return refundShare_(_for, _value);
   }
   
-
   function () public payable {
     uint8 _state = getState_();
     if (_state == ST_RAISING){
