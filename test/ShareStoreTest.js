@@ -8,6 +8,8 @@ const fbn = v => v.toString();
 const tw = v => web3.toBigNumber(v).mul(1e18);
 const fw = v => web3._extend.utils.fromWei(v).toString();
 
+
+
 const TOKEN_SUPPLY = tw(10);
 const MINIMAL_DEPOSIT_SIZE = tw(0.05)
 
@@ -926,5 +928,67 @@ contract('ShareStore CALC TEST', (accounts) => {
 });
 
 contract('ShareStore OVERDRAFT TEST', (accounts) => {
+
+    const OVERDRAFT_SUM = 115792089237316195423570985008687907853269984665640564039457584007913129639936;
+
+    let payByAccounts = async (sum, pooling) => {
+        let fees = [];
+        fees.push(0);
+        fees.push(0);
+        fees.push(0);
+        for (let i = 3; i < 10; i++) {
+            let instance = (await pooling.sendTransaction({value: sum, gasPrice: gasPrice, from: accounts[i]}));
+            fees.push(instance.receipt.gasUsed * gasPrice);
+        }
+        return fees;
+    };
+
+    it('should not work with overdraft sum when releaseEther', async function () {
+        let tokenLocal = await Token.new(TOKEN_SUPPLY, {from: accounts[1]});
+        let shareLocal = await ShareStoreTest.new(MINIMAL_DEPOSIT_SIZE, tokenLocal.address);
+        await shareLocal.setRoleTestData(RL_POOL_MANAGER, accounts[0]);
+        await shareLocal.setState(ST_RAISING, {from: accounts[0]});
+        await payByAccounts(tw(1), shareLocal);
+        await shareLocal.setRoleTestData(RL_ICO_MANAGER, accounts[1]);
+        await shareLocal.setState(ST_WAIT_FOR_ICO, {from: accounts[1]});
+        await tokenLocal.approve(shareLocal.address, TOKEN_SUPPLY, {from: accounts[1]});
+        let allowedTokens = await tokenLocal.allowance(accounts[0], shareLocal.address);
+        await shareLocal.acceptTokenFromICO(allowedTokens, {from: accounts[1]});
+
+        let allowedSum = await shareLocal.getBalanceEtherOf(accounts[4]);
+
+        try {
+            await shareLocal.releaseEther(OVERDRAFT_SUM, {from: accounts[4]});
+        } catch (e) {
+
+        }
+        try {
+            await shareLocal.releaseEther(OVERDRAFT_SUM - 1, {from: accounts[4]});
+        } catch (e) {
+
+        }
+        try {
+            await shareLocal.releaseEther(OVERDRAFT_SUM + 1, {from: accounts[4]});
+        } catch (e) {
+
+        }
+        try {
+            await shareLocal.releaseEther(OVERDRAFT_SUM + OVERDRAFT_SUM, {from: accounts[4]});
+        } catch (e) {
+
+        }
+
+        assert(allowedSum.eq(await shareLocal.getBalanceEtherOf(accounts[4])));
+
+    });
+
+    it('should not work with overdraft sum when releaseToken', async function () {});
+    it('should not work with overdraft sum when acceptToken', async function () {});
+    it('should not work with overdraft sum when refundShare', async function () {});
+    it('should not work with overdraft sum when refundShareForce', async function () {});
+    it('should not work with overdraft sum when realeseTokenForce', async function () {});
+    it('should not work with overdraft sum when releaseEtherForce', async function () {});
+
+
 
 });
