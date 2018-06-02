@@ -744,7 +744,7 @@ contract('ShareStore CALC TEST', (accounts) => {
     it('should doing full cycle test', async function () {
         const poolManager = accounts[0];
         const icoManager = accounts[1];
-        let tokenLocal = await Token.new(TOKEN_SUPPLY);
+        let tokenLocal = await Token.new(TOKEN_SUPPLY, {from: icoManager});
         let shareLocal = await ShareStoreTest.new(MINIMAL_DEPOSIT_SIZE, tokenLocal.address);
         await shareLocal.setRoleTestData(RL_POOL_MANAGER, poolManager);
         await shareLocal.setRoleTestData(RL_ICO_MANAGER, icoManager);
@@ -820,6 +820,17 @@ contract('ShareStore CALC TEST', (accounts) => {
             account9: 0
         };
 
+        let balanceAfterDestibution = {
+            account2: 0,
+            account3: 0,
+            account4: 0,
+            account5: 0,
+            account6: 0,
+            account7: 0,
+            account8: 0,
+            account9: 0
+        }
+
         let poolingETHbalance = {
             account2: 0,
             account3: 0,
@@ -831,7 +842,20 @@ contract('ShareStore CALC TEST', (accounts) => {
             account9: 0
         };
 
+        let tokenBalance = {
+            account2: 0,
+            account3: 0,
+            account4: 0,
+            account5: 0,
+            account6: 0,
+            account7: 0,
+            account8: 0,
+            account9: 0
+        };
+
         let allowedValue = tw(2);
+
+        let totalDestributedTokens = tw(0);
 
         for (let i in account)
             balance[i] = await web3.eth.getBalance(account[i]);
@@ -868,21 +892,36 @@ contract('ShareStore CALC TEST', (accounts) => {
         
         let allowance = await tokenLocal.allowance(icoManager, shareLocal.address);
         assert(allowance.eq(allowedValue));
+        let g = await shareLocal.tokenAddress();
 
-        // await shareLocal.acceptTokenFromICO(allowedValue, {from: icoManager});
+        await shareLocal.acceptTokenFromICO(allowedValue, {from: icoManager});
 
-        // await shareLocal.setState(ST_TOKEN_DISTRIBUTION, {
-        //     from: icoManager
-        // });
+        await shareLocal.setState(ST_TOKEN_DISTRIBUTION, {
+            from: icoManager
+        });
 
-        // for (let i in account) {
-        //     let tx = await shareLocal.buyShare({
-        //         from: account[i],
-        //         value: sendDestributionValue[i]
-        //     });
-        //     destributionFee[i] = tx.receipt.gasUsed;
-        // }
+        for (let i in account) {
+            let tx = await shareLocal.sendTransaction({
+                from: account[i],
+                value: sendDestributionValue[i]
+            });
+            destributionFee[i] = tx.receipt.gasUsed;
+        }
 
+        for (let i in account)
+            balanceAfterDestibution[i] = await web3.eth.getBalance(account[i]);
+
+        for (let i in account) {
+            tokenBalance[i] = await tokenLocal.balanceOf(account[i]);
+            totalDestributedTokens = totalDestributedTokens.plus(tokenBalance[i]);
+        }
+        
+        // let k = await tokenLocal.balanceOf(shareLocal.address);
+        // console.log(k.toNumber())
+
+        // console.log(allowedValue)
+        // console.log(totalDestributedTokens)
+        // assert(allowedValue.eq(totalDestributedTokens))
     });
 });
 
