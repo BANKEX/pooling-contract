@@ -3,16 +3,16 @@ const Token = artifacts.require("./TestToken.sol");
 
 const web3 = global.web3;
 
+
+
 const tbn = v => web3.toBigNumber(v);
 const fbn = v => v.toString();
 const tw = v => web3.toBigNumber(v).mul(1e18);
 const fw = v => web3._extend.utils.fromWei(v).toString();
 
 
-
 const TOKEN_SUPPLY = tw(10);
-const MINIMAL_DEPOSIT_SIZE = tw(0.05)
-
+const MINIMAL_DEPOSIT_SIZE = tw(0.05);
 const TI_DAY = tbn(86400);
 
 const ST_DEFAULT = tbn(0x00);
@@ -742,151 +742,151 @@ contract('ShareStore NEGATIVE TEST', (accounts) => {
 
 });
 
-contract('ShareStore CALC TEST', (accounts) => {
-    it('should doing full cycle test', async function () {
-        const poolManager = accounts[0];
-        const icoManager = accounts[1];
-        let tokenLocal = await Token.new(TOKEN_SUPPLY);
-        let shareLocal = await ShareStoreTest.new(MINIMAL_DEPOSIT_SIZE, tokenLocal.address);
-        await shareLocal.setRoleTestData(RL_POOL_MANAGER, poolManager);
-        await shareLocal.setRoleTestData(RL_ICO_MANAGER, icoManager);
-        await shareLocal.setState(ST_RAISING, {
-            from: poolManager
-        });
-
-        let account = {
-            account2: accounts[2],
-            account3: accounts[3],
-            account4: accounts[4],
-            account5: accounts[5],
-            account6: accounts[6],
-            account7: accounts[7],
-            account8: accounts[8],
-            account9: accounts[9]
-        }
-
-        let sendValue = {
-            account2: tw(1),
-            account3: tw(1.23129432423),
-            account4: tw(3.1111111),
-            account5: tw(10.999999999),
-            account6: tw(0.05000000000001),
-            account7: tw(0.1111111119),
-            account8: tw(9.191919191919),
-            account9: tw(4.99911919991991)
-        };
-
-        let sendDestributionValue = {
-            account2: tw(0.00000000000001),
-            account3: tw(1),
-            account4: tw(1.11111111111111111),
-            account5: tw(9.0000001),
-            account6: tw(2.222212221212),
-            account7: tw(1.010001011010101),
-            account8: tw(0.02222222),
-            account9: tw(0.00010001000100001)
-        };
-
-        let totalSendValue = tbn(0);
-
-        let fee = {
-            account2: 0,
-            account3: 0,
-            account4: 0,
-            account5: 0,
-            account6: 0,
-            account7: 0,
-            account8: 0,
-            account9: 0
-        };
-
-        let destributionFee = {
-            account2: 0,
-            account3: 0,
-            account4: 0,
-            account5: 0,
-            account6: 0,
-            account7: 0,
-            account8: 0,
-            account9: 0
-        };
-
-        let balance = {
-            account2: 0,
-            account3: 0,
-            account4: 0,
-            account5: 0,
-            account6: 0,
-            account7: 0,
-            account8: 0,
-            account9: 0
-        };
-
-        let poolingETHbalance = {
-            account2: 0,
-            account3: 0,
-            account4: 0,
-            account5: 0,
-            account6: 0,
-            account7: 0,
-            account8: 0,
-            account9: 0
-        };
-
-        let allowedValue = tw(2);
-
-        for (let i in account)
-            balance[i] = await web3.eth.getBalance(account[i]);
-
-        for (let i in account) {
-            let tx = await shareLocal.buyShare({
-                from: account[i],
-                value: sendValue[i]
-            });
-            totalSendValue = totalSendValue.plus(sendValue[i]);
-            fee[i] = tx.receipt.gasUsed;
-        }
-
-        for (let i in account)
-            poolingETHbalance[i] = await shareLocal.getBalanceEtherOf(account[i]);
-
-        let totalShare = await shareLocal.totalShare();
-        assert(totalShare.eq(totalSendValue));
-
-        for (let i in account)
-            assert(sendValue[i].eq(poolingETHbalance[i]))
-
-        await shareLocal.setState(ST_WAIT_FOR_ICO, {
-            from: poolManager
-        });
-
-        let stakeholderShare = await shareLocal.stakeholderShare(2);
-        let stakeholderBalance = await shareLocal.getStakeholderBalanceOf(RL_ICO_MANAGER);
-        assert(totalSendValue.mul(stakeholderShare).div(1e18).eq(stakeholderBalance));
-   
-        await tokenLocal.approve(shareLocal.address, allowedValue, {
-            from: icoManager
-        });
-        
-        let allowance = await tokenLocal.allowance(icoManager, shareLocal.address);
-        assert(allowance.eq(allowedValue));
-
-        // await shareLocal.acceptTokenFromICO(allowedValue, {from: icoManager});
-
-        // await shareLocal.setState(ST_TOKEN_DISTRIBUTION, {
-        //     from: icoManager
-        // });
-
-        // for (let i in account) {
-        //     let tx = await shareLocal.buyShare({
-        //         from: account[i],
-        //         value: sendDestributionValue[i]
-        //     });
-        //     destributionFee[i] = tx.receipt.gasUsed;
-        // }
-
-    });
-});
+// contract('ShareStore CALC TEST', (accounts) => {
+//     it('should doing full cycle test', async function () {
+//         const poolManager = accounts[0];
+//         const icoManager = accounts[1];
+//         let tokenLocal = await Token.new(TOKEN_SUPPLY);
+//         let shareLocal = await ShareStoreTest.new(MINIMAL_DEPOSIT_SIZE, tokenLocal.address);
+//         await shareLocal.setRoleTestData(RL_POOL_MANAGER, poolManager);
+//         await shareLocal.setRoleTestData(RL_ICO_MANAGER, icoManager);
+//         await shareLocal.setState(ST_RAISING, {
+//             from: poolManager
+//         });
+//
+//         let account = {
+//             account2: accounts[2],
+//             account3: accounts[3],
+//             account4: accounts[4],
+//             account5: accounts[5],
+//             account6: accounts[6],
+//             account7: accounts[7],
+//             account8: accounts[8],
+//             account9: accounts[9]
+//         }
+//
+//         let sendValue = {
+//             account2: tw(1),
+//             account3: tw(1.23129432423),
+//             account4: tw(3.1111111),
+//             account5: tw(10.999999999),
+//             account6: tw(0.05000000000001),
+//             account7: tw(0.1111111119),
+//             account8: tw(9.191919191919),
+//             account9: tw(4.99911919991991)
+//         };
+//
+//         let sendDestributionValue = {
+//             account2: tw(0.00000000000001),
+//             account3: tw(1),
+//             account4: tw(1.11111111111111111),
+//             account5: tw(9.0000001),
+//             account6: tw(2.222212221212),
+//             account7: tw(1.010001011010101),
+//             account8: tw(0.02222222),
+//             account9: tw(0.00010001000100001)
+//         };
+//
+//         let totalSendValue = tbn(0);
+//
+//         let fee = {
+//             account2: 0,
+//             account3: 0,
+//             account4: 0,
+//             account5: 0,
+//             account6: 0,
+//             account7: 0,
+//             account8: 0,
+//             account9: 0
+//         };
+//
+//         let destributionFee = {
+//             account2: 0,
+//             account3: 0,
+//             account4: 0,
+//             account5: 0,
+//             account6: 0,
+//             account7: 0,
+//             account8: 0,
+//             account9: 0
+//         };
+//
+//         let balance = {
+//             account2: 0,
+//             account3: 0,
+//             account4: 0,
+//             account5: 0,
+//             account6: 0,
+//             account7: 0,
+//             account8: 0,
+//             account9: 0
+//         };
+//
+//         let poolingETHbalance = {
+//             account2: 0,
+//             account3: 0,
+//             account4: 0,
+//             account5: 0,
+//             account6: 0,
+//             account7: 0,
+//             account8: 0,
+//             account9: 0
+//         };
+//
+//         let allowedValue = tw(2);
+//
+//         for (let i in account)
+//             balance[i] = await web3.eth.getBalance(account[i]);
+//
+//         for (let i in account) {
+//             let tx = await shareLocal.buyShare({
+//                 from: account[i],
+//                 value: sendValue[i]
+//             });
+//             totalSendValue = totalSendValue.plus(sendValue[i]);
+//             fee[i] = tx.receipt.gasUsed;
+//         }
+//
+//         for (let i in account)
+//             poolingETHbalance[i] = await shareLocal.getBalanceEtherOf(account[i]);
+//
+//         let totalShare = await shareLocal.totalShare();
+//         assert(totalShare.eq(totalSendValue));
+//
+//         for (let i in account)
+//             assert(sendValue[i].eq(poolingETHbalance[i]))
+//
+//         await shareLocal.setState(ST_WAIT_FOR_ICO, {
+//             from: poolManager
+//         });
+//
+//         let stakeholderShare = await shareLocal.stakeholderShare(2);
+//         let stakeholderBalance = await shareLocal.getStakeholderBalanceOf(RL_ICO_MANAGER);
+//         assert(totalSendValue.mul(stakeholderShare).div(1e18).eq(stakeholderBalance));
+//
+//         await tokenLocal.approve(shareLocal.address, allowedValue, {
+//             from: icoManager
+//         });
+//
+//         let allowance = await tokenLocal.allowance(icoManager, shareLocal.address);
+//         assert(allowance.eq(allowedValue));
+//
+//         // await shareLocal.acceptTokenFromICO(allowedValue, {from: icoManager});
+//
+//         // await shareLocal.setState(ST_TOKEN_DISTRIBUTION, {
+//         //     from: icoManager
+//         // });
+//
+//         // for (let i in account) {
+//         //     let tx = await shareLocal.buyShare({
+//         //         from: account[i],
+//         //         value: sendDestributionValue[i]
+//         //     });
+//         //     destributionFee[i] = tx.receipt.gasUsed;
+//         // }
+//
+//     });
+// });
 
 contract('ShareStore OVERDRAFT TEST', (accounts) => {
 
@@ -913,43 +913,76 @@ contract('ShareStore OVERDRAFT TEST', (accounts) => {
         await shareLocal.setRoleTestData(RL_ICO_MANAGER, accounts[1]);
         await shareLocal.setState(ST_WAIT_FOR_ICO, {from: accounts[1]});
         await tokenLocal.approve(shareLocal.address, TOKEN_SUPPLY, {from: accounts[1]});
-        let allowedTokens = await tokenLocal.allowance(accounts[0], shareLocal.address);
+        let allowedTokens = await tokenLocal.allowance(accounts[1], shareLocal.address);
         await shareLocal.acceptTokenFromICO(allowedTokens, {from: accounts[1]});
+        await shareLocal.setState(ST_TOKEN_DISTRIBUTION, {from: accounts[1]});
+        assert(ST_TOKEN_DISTRIBUTION.eq(await shareLocal.getState()), "state error");
+
+        let balanceBefore = await web3.eth.getBalance(accounts[4]);
 
         let allowedSum = await shareLocal.getBalanceEtherOf(accounts[4]);
 
-        try {
-            await shareLocal.releaseEther(OVERDRAFT_SUM, {from: accounts[4]});
-        } catch (e) {
+        let instance = await shareLocal.releaseEther(OVERDRAFT_SUM, {from: accounts[4], gasPrice: gasPrice});
 
-        }
-        try {
-            await shareLocal.releaseEther(OVERDRAFT_SUM - 1, {from: accounts[4]});
-        } catch (e) {
+        let fee = instance.receipt.gasUsed * gasPrice;
 
-        }
-        try {
-            await shareLocal.releaseEther(OVERDRAFT_SUM + 1, {from: accounts[4]});
-        } catch (e) {
+        let balanceAfter = await web3.eth.getBalance(accounts[4]);
 
-        }
-        try {
-            await shareLocal.releaseEther(OVERDRAFT_SUM + OVERDRAFT_SUM, {from: accounts[4]});
-        } catch (e) {
-
-        }
-
-        assert(allowedSum.eq(await shareLocal.getBalanceEtherOf(accounts[4])));
+        assert(((balanceBefore.plus(allowedSum))).eq((balanceAfter).plus(fee)), " error");
 
     });
 
-    it('should not work with overdraft sum when releaseToken', async function () {});
-    it('should not work with overdraft sum when acceptToken', async function () {});
-    it('should not work with overdraft sum when refundShare', async function () {});
-    it('should not work with overdraft sum when refundShareForce', async function () {});
-    it('should not work with overdraft sum when realeseTokenForce', async function () {});
-    it('should not work with overdraft sum when releaseEtherForce', async function () {});
-
-
-
+    // it('should not work with overdraft sum when releaseToken', async function () {
+    //     let tokenLocal = await Token.new(TOKEN_SUPPLY, {from: accounts[1]});
+    //     let shareLocal = await ShareStoreTest.new(MINIMAL_DEPOSIT_SIZE, tokenLocal.address);
+    //     await shareLocal.setRoleTestData(RL_POOL_MANAGER, accounts[0]);
+    //     await shareLocal.setState(ST_RAISING, {from: accounts[0]});
+    //     await payByAccounts(tw(1), shareLocal);
+    //     await shareLocal.setRoleTestData(RL_ICO_MANAGER, accounts[1]);
+    //     await shareLocal.setState(ST_WAIT_FOR_ICO, {from: accounts[1]});
+    //     await tokenLocal.approve(shareLocal.address, TOKEN_SUPPLY, {from: accounts[1]});
+    //     let allowedTokens = await tokenLocal.allowance(accounts[1], shareLocal.address);
+    //     await shareLocal.acceptTokenFromICO(allowedTokens, {from: accounts[1]});
+    //     let allowedSum = await shareLocal.getBalanceTokenOf(accounts[4]);
+    //     await shareLocal.setState(ST_TOKEN_DISTRIBUTION, {from: accounts[1]});
+    //     assert(ST_TOKEN_DISTRIBUTION.eq(await shareLocal.getState()));
+    //
+    //     await shareLocal.releaseToken(OVERDRAFT_SUM, {from: accounts[4]});
+    //
+    //     assert(allowedSum.eq(await shareLocal.getBalanceTokenOf(accounts[4])));
+    // });
+    // it('should not work with overdraft sum when acceptToken', async function () {
+    //     let tokenLocal = await Token.new(TOKEN_SUPPLY, {from: accounts[1]});
+    //     let shareLocal = await ShareStoreTest.new(MINIMAL_DEPOSIT_SIZE, tokenLocal.address);
+    //     await shareLocal.setRoleTestData(RL_POOL_MANAGER, accounts[0]);
+    //     await shareLocal.setState(ST_RAISING, {from: accounts[0]});
+    //     await payByAccounts(tw(1), shareLocal);
+    //     await shareLocal.setRoleTestData(RL_ICO_MANAGER, accounts[1]);
+    //     await shareLocal.setState(ST_WAIT_FOR_ICO, {from: accounts[1]});
+    //     await tokenLocal.approve(shareLocal.address, TOKEN_SUPPLY, {from: accounts[1]});
+    //     try {
+    //         await shareLocal.acceptTokenFromICO(OVERDRAFT_SUM, {from: accounts[1]});
+    //     } catch (e) {
+    //     }
+    //
+    // });
+    // it('should not work with overdraft sum when refundShare', async function () {
+    //     let tokenLocal = await Token.new(TOKEN_SUPPLY, {from: accounts[1]});
+    //     let shareLocal = await ShareStoreTest.new(MINIMAL_DEPOSIT_SIZE, tokenLocal.address);
+    //     await shareLocal.setRoleTestData(RL_POOL_MANAGER, accounts[0]);
+    //     await shareLocal.setState(ST_RAISING, {from: accounts[0]});
+    //     await payByAccounts(tw(1), shareLocal);
+    //     await shareLocal.setRoleTestData(RL_ICO_MANAGER, accounts[1]);
+    //     await shareLocal.setState(ST_MONEY_BACK, {from: accounts[1]});
+    //     try {
+    //         await shareLocal.refundShare(OVERDRAFT_SUM, {from: accounts[4]});
+    //     } catch (e) {
+    //     }
+    // });
+    // it('should not work with overdraft sum when refundShareForce', async function () {
+    // });
+    // it('should not work with overdraft sum when realeseTokenForce', async function () {
+    // });
+    // it('should not work with overdraft sum when releaseEtherForce', async function () {
+    // });
 });
