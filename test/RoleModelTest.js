@@ -41,15 +41,13 @@ contract('RoleModelTest ROLE TEST', (accounts) => {
     });
 
     it("RL_DEFAULT role of contract should be from any other accounts", async function() {
-        
-        for(let i = 4; i < 10; i++) 
+
+        for(let i = 4; i < 10; i++)
         {
           assert(RL_DEFAULT.eq(await roleModelTest.getRole(accounts[i])));
         }
-       
+
     });
 
 
-
-    
-})
+});

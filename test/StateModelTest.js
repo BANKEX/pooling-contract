@@ -107,11 +107,11 @@ contract('StateModelTest COMMON TEST', (accounts) => {
     await stateModelTestLocal.incTimestamp(DISTRIBUTION_PERIOD);
     assert(ST_FUND_DEPRECATED.eq(await stateModelTestLocal.getState()));
   });
-  
+
 });
 
 contract('StateModelTest ROLE TEST POSITIVE', (accounts) => {
-  
+
   it("pool manager should be able to set state to ST_RAISING", async function() {
     let stateModelTestLocal = await StateModelTest.new(RAISING_PERIOD, ICO_PERIOD, DISTRIBUTION_PERIOD, MINIMAL_FUND_SIZE, MAXIMAL_FUND_SIZE);
     await stateModelTestLocal.setRole(RL_POOL_MANAGER);
@@ -211,7 +211,7 @@ contract('StateModelTest ROLE TEST POSITIVE', (accounts) => {
 });
 
 contract('StateModelTest ROLE TEST NEGATIVE', (accounts) => {
-  
+
   it("admin or ico manager or paybot or DEFAULT shouldn't be able to set state to ST_RAISING", async function() {
     let stateModelTestLocal = await StateModelTest.new(RAISING_PERIOD, ICO_PERIOD, DISTRIBUTION_PERIOD, MINIMAL_FUND_SIZE, MAXIMAL_FUND_SIZE);
     await stateModelTestLocal.setRole(RL_ADMIN);
@@ -252,7 +252,7 @@ contract('StateModelTest ROLE TEST NEGATIVE', (accounts) => {
 });
 
 contract('StateModelTest TIME TEST POSITIVE', (accounts) => {
-  
+
   it("after RAISING must be WAIT FOR ICO if enough ETH collected", async function() {
     let stateModelTestLocal = await StateModelTest.new(RAISING_PERIOD, ICO_PERIOD, DISTRIBUTION_PERIOD, MINIMAL_FUND_SIZE, MAXIMAL_FUND_SIZE);
     await stateModelTestLocal.setRole(RL_POOL_MANAGER);
@@ -318,7 +318,7 @@ contract('StateModelTest TIME TEST POSITIVE', (accounts) => {
 });
 
 contract('StateModelTest TIME TEST NEGATIVE', (accounts) => {
-  
+
   it("after RAISING must not be WAIT FOR ICO if not enough ETH collected", async function() {
     let stateModelTestLocal = await StateModelTest.new(RAISING_PERIOD, ICO_PERIOD, DISTRIBUTION_PERIOD, MINIMAL_FUND_SIZE, MAXIMAL_FUND_SIZE);
     await stateModelTestLocal.setRole(RL_POOL_MANAGER);
@@ -330,7 +330,7 @@ contract('StateModelTest TIME TEST NEGATIVE', (accounts) => {
 });
 
 contract('StateModelTest TimeState TEST', (accounts) => {
-  
+
   it("must be default", async function() {
     let stateModelTestLocal = await StateModelTest.new(RAISING_PERIOD, ICO_PERIOD, DISTRIBUTION_PERIOD, MINIMAL_FUND_SIZE, MAXIMAL_FUND_SIZE);
     assert(TM_DEFAULT.eq(await stateModelTestLocal.getTimeState()));
