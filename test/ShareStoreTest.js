@@ -742,7 +742,6 @@ contract('ShareStore NEGATIVE TEST', (accounts) => {
 
 });
 
-<<<<<<< HEAD
 // contract('ShareStore CALC TEST', (accounts) => {
 //     it('should doing full cycle test', async function () {
 //         const poolManager = accounts[0];
@@ -888,7 +887,7 @@ contract('ShareStore NEGATIVE TEST', (accounts) => {
 //
 //     });
 // });
-=======
+
 contract('ShareStore CALC TEST', (accounts) => {
     it('should doing full cycle test', async function () {
         const poolManager = accounts[0];
@@ -1073,7 +1072,7 @@ contract('ShareStore CALC TEST', (accounts) => {
         // assert(allowedValue.eq(totalDestributedTokens))
     });
 });
->>>>>>> 9a63cebde4cca399de41749a4fb92191ae31cc8f
+
 
 contract('ShareStore OVERDRAFT TEST', (accounts) => {
 
