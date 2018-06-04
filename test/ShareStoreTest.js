@@ -944,6 +944,131 @@ contract('ShareStore CALC TEST', (accounts) => {
             assert(poolingTokenBalance.eq(0));
         }          
     });
+
+    it('should calculate money back', async function () {
+        const admin = accounts[0];
+        const poolManager = accounts[1];
+        const icoManager = accounts[2];
+        let tokenLocal = await Token.new(TOKEN_SUPPLY, {
+            from: icoManager
+        });
+        let shareLocal = await ShareStoreTest.new(MINIMAL_DEPOSIT_SIZE, tokenLocal.address);
+        await shareLocal.setRoleTestData(RL_POOL_MANAGER, poolManager);
+        await shareLocal.setRoleTestData(RL_ICO_MANAGER, icoManager);
+        await shareLocal.setState(ST_RAISING, {
+            from: poolManager
+        });
+
+        let account = {
+            account3: accounts[3],
+            account4: accounts[4],
+            account5: accounts[5],
+            account6: accounts[6],
+            account7: accounts[7],
+            account8: accounts[8],
+            account9: accounts[9]
+        };
+
+        let sendValue = {
+            account3: tw(0.72134213423123),
+            account4: tw(1.1111111111101),
+            account5: tw(0.88888888888),
+            account6: tw(0.05000000000001),
+            account7: tw(0.999999999999999999),
+            account8: tw(1.1),
+            account9: tw(0.3454565433)
+        };
+
+        let sendMoneyBackValue = {
+            account3: tw(0.6),
+            account4: tw(1.1),
+            account5: tw(0.777777777777),
+            account6: tw(0.04),
+            account7: tw(0.999999999),
+            account8: tw(0.09191919199191919),
+            account9: tw(0.061)
+        };
+
+        let sendMoneyBackAdminValue = {
+            account3: tw(0.1),
+            account4: tw(0.00001),
+            account5: tw(0.1),
+            account6: tw(0.01),
+            account7: tw(0.0000000000000001),
+            account8: tw(0.09191922219199191919),
+            account9: tw(0.062123121)
+        };
+
+        let initialBalance = {};
+        let fee = {};
+        let moneyBackFee = {};
+        let totalSendValue = tbn(0);
+
+        for (let i in account)
+            initialBalance[i] = await web3.eth.getBalance(account[i]);
+
+        for (let i in account) {
+            let tx = await shareLocal.buyShare({
+                from: account[i],
+                value: sendValue[i],
+                gasPrice: gasPrice
+            });
+            totalSendValue = totalSendValue.plus(sendValue[i]);
+            fee[i] = gasPrice.mul(tx.receipt.gasUsed);
+        }
+
+        for (let i in account) {
+            let balance = await web3.eth.getBalance(account[i]);
+            assert(balance.eq(initialBalance[i].minus(fee[i]).minus(sendValue[i])));
+        }
+
+        await shareLocal.setState(ST_MONEY_BACK, {
+            from: poolManager
+        });
+
+        for (let i in account) {
+            let tx = await shareLocal.refundShare(sendMoneyBackValue[i], {
+                from: account[i],
+                gasPrice: gasPrice
+            });
+            moneyBackFee[i] = gasPrice.mul(tx.receipt.gasUsed);
+        }
+
+        for (let i in account) {
+            let balance = await web3.eth.getBalance(account[i]);
+            assert(balance.eq(initialBalance[i].minus(sendValue[i]).minus(fee[i]).plus(sendMoneyBackValue[i]).minus(moneyBackFee[i])));
+        }
+
+        await shareLocal.setRoleTestData(RL_ADMIN, admin);
+        for (let i in account) {
+            let tx = await shareLocal.refundShareForce(account[i],sendMoneyBackAdminValue[i], {
+                from: admin,
+                gasPrice: gasPrice
+            });
+        }
+
+        for (let i in account) {
+            let balance = await web3.eth.getBalance(account[i]);
+            assert(balance.eq(initialBalance[i].minus(sendValue[i]).minus(fee[i]).plus(sendMoneyBackValue[i]).plus(sendMoneyBackAdminValue[i]).minus(moneyBackFee[i])));
+        }
+
+        for (let i in account) {
+            let tx = await shareLocal.sendTransaction({
+                from: account[i],
+                value: sendMoneyBackValue[i],
+                gasPrice: gasPrice
+            });
+            moneyBackFee[i] = moneyBackFee[i].plus(gasPrice.mul(tx.receipt.gasUsed));
+        }
+
+        for (let i in account) {
+            let balance = await web3.eth.getBalance(account[i]);
+            assert(balance.eq(initialBalance[i].minus(fee[i]).minus(moneyBackFee[i])));
+        }
+
+        let totalShare = await shareLocal.totalShare();
+        assert(totalShare.eq(0));
+    });
 });
 
 
