@@ -742,157 +742,13 @@ contract('ShareStore NEGATIVE TEST', (accounts) => {
 
 });
 
-// contract('ShareStore CALC TEST', (accounts) => {
-//     it('should doing full cycle test', async function () {
-//         const poolManager = accounts[0];
-//         const icoManager = accounts[1];
-//         let tokenLocal = await Token.new(TOKEN_SUPPLY);
-//         let shareLocal = await ShareStoreTest.new(MINIMAL_DEPOSIT_SIZE, tokenLocal.address);
-//         await shareLocal.setRoleTestData(RL_POOL_MANAGER, poolManager);
-//         await shareLocal.setRoleTestData(RL_ICO_MANAGER, icoManager);
-//         await shareLocal.setState(ST_RAISING, {
-//             from: poolManager
-//         });
-//
-//         let account = {
-//             account2: accounts[2],
-//             account3: accounts[3],
-//             account4: accounts[4],
-//             account5: accounts[5],
-//             account6: accounts[6],
-//             account7: accounts[7],
-//             account8: accounts[8],
-//             account9: accounts[9]
-//         }
-//
-//         let sendValue = {
-//             account2: tw(1),
-//             account3: tw(1.23129432423),
-//             account4: tw(3.1111111),
-//             account5: tw(10.999999999),
-//             account6: tw(0.05000000000001),
-//             account7: tw(0.1111111119),
-//             account8: tw(9.191919191919),
-//             account9: tw(4.99911919991991)
-//         };
-//
-//         let sendDestributionValue = {
-//             account2: tw(0.00000000000001),
-//             account3: tw(1),
-//             account4: tw(1.11111111111111111),
-//             account5: tw(9.0000001),
-//             account6: tw(2.222212221212),
-//             account7: tw(1.010001011010101),
-//             account8: tw(0.02222222),
-//             account9: tw(0.00010001000100001)
-//         };
-//
-//         let totalSendValue = tbn(0);
-//
-//         let fee = {
-//             account2: 0,
-//             account3: 0,
-//             account4: 0,
-//             account5: 0,
-//             account6: 0,
-//             account7: 0,
-//             account8: 0,
-//             account9: 0
-//         };
-//
-//         let destributionFee = {
-//             account2: 0,
-//             account3: 0,
-//             account4: 0,
-//             account5: 0,
-//             account6: 0,
-//             account7: 0,
-//             account8: 0,
-//             account9: 0
-//         };
-//
-//         let balance = {
-//             account2: 0,
-//             account3: 0,
-//             account4: 0,
-//             account5: 0,
-//             account6: 0,
-//             account7: 0,
-//             account8: 0,
-//             account9: 0
-//         };
-//
-//         let poolingETHbalance = {
-//             account2: 0,
-//             account3: 0,
-//             account4: 0,
-//             account5: 0,
-//             account6: 0,
-//             account7: 0,
-//             account8: 0,
-//             account9: 0
-//         };
-//
-//         let allowedValue = tw(2);
-//
-//         for (let i in account)
-//             balance[i] = await web3.eth.getBalance(account[i]);
-//
-//         for (let i in account) {
-//             let tx = await shareLocal.buyShare({
-//                 from: account[i],
-//                 value: sendValue[i]
-//             });
-//             totalSendValue = totalSendValue.plus(sendValue[i]);
-//             fee[i] = tx.receipt.gasUsed;
-//         }
-//
-//         for (let i in account)
-//             poolingETHbalance[i] = await shareLocal.getBalanceEtherOf(account[i]);
-//
-//         let totalShare = await shareLocal.totalShare();
-//         assert(totalShare.eq(totalSendValue));
-//
-//         for (let i in account)
-//             assert(sendValue[i].eq(poolingETHbalance[i]))
-//
-//         await shareLocal.setState(ST_WAIT_FOR_ICO, {
-//             from: poolManager
-//         });
-//
-//         let stakeholderShare = await shareLocal.stakeholderShare(2);
-//         let stakeholderBalance = await shareLocal.getStakeholderBalanceOf(RL_ICO_MANAGER);
-//         assert(totalSendValue.mul(stakeholderShare).div(1e18).eq(stakeholderBalance));
-//
-//         await tokenLocal.approve(shareLocal.address, allowedValue, {
-//             from: icoManager
-//         });
-//
-//         let allowance = await tokenLocal.allowance(icoManager, shareLocal.address);
-//         assert(allowance.eq(allowedValue));
-//
-//         // await shareLocal.acceptTokenFromICO(allowedValue, {from: icoManager});
-//
-//         // await shareLocal.setState(ST_TOKEN_DISTRIBUTION, {
-//         //     from: icoManager
-//         // });
-//
-//         // for (let i in account) {
-//         //     let tx = await shareLocal.buyShare({
-//         //         from: account[i],
-//         //         value: sendDestributionValue[i]
-//         //     });
-//         //     destributionFee[i] = tx.receipt.gasUsed;
-//         // }
-//
-//     });
-// });
-
 contract('ShareStore CALC TEST', (accounts) => {
     it('should doing full cycle test', async function () {
         const poolManager = accounts[0];
         const icoManager = accounts[1];
-        let tokenLocal = await Token.new(TOKEN_SUPPLY, {from: icoManager});
+        let tokenLocal = await Token.new(TOKEN_SUPPLY, {
+            from: icoManager
+        });
         let shareLocal = await ShareStoreTest.new(MINIMAL_DEPOSIT_SIZE, tokenLocal.address);
         await shareLocal.setRoleTestData(RL_POOL_MANAGER, poolManager);
         await shareLocal.setRoleTestData(RL_ICO_MANAGER, icoManager);
@@ -933,98 +789,40 @@ contract('ShareStore CALC TEST', (accounts) => {
             account9: tw(0.00010001000100001)
         };
 
-        let totalSendValue = tbn(0);
+        let initialBalance = {};
+        let fee = {};
+        let destributionFee = {};
+        let tokenBalance = {};
+        let distributeETHValues = {};
+        let distributeETHFee = {};
+        let distributeTokenValues = {};
+        let distributeTokenFee = {};
 
-        let fee = {
-            account2: 0,
-            account3: 0,
-            account4: 0,
-            account5: 0,
-            account6: 0,
-            account7: 0,
-            account8: 0,
-            account9: 0
-        };
-
-        let destributionFee = {
-            account2: 0,
-            account3: 0,
-            account4: 0,
-            account5: 0,
-            account6: 0,
-            account7: 0,
-            account8: 0,
-            account9: 0
-        };
-
-        let balance = {
-            account2: 0,
-            account3: 0,
-            account4: 0,
-            account5: 0,
-            account6: 0,
-            account7: 0,
-            account8: 0,
-            account9: 0
-        };
-
-        let balanceAfterDestibution = {
-            account2: 0,
-            account3: 0,
-            account4: 0,
-            account5: 0,
-            account6: 0,
-            account7: 0,
-            account8: 0,
-            account9: 0
-        }
-
-        let poolingETHbalance = {
-            account2: 0,
-            account3: 0,
-            account4: 0,
-            account5: 0,
-            account6: 0,
-            account7: 0,
-            account8: 0,
-            account9: 0
-        };
-
-        let tokenBalance = {
-            account2: 0,
-            account3: 0,
-            account4: 0,
-            account5: 0,
-            account6: 0,
-            account7: 0,
-            account8: 0,
-            account9: 0
-        };
-
+        let releaseEtherToStakeholderValue = tw(1.5);
         let allowedValue = tw(2);
-
+        let totalSendValue = tbn(0);
         let totalDestributedTokens = tw(0);
 
         for (let i in account)
-            balance[i] = await web3.eth.getBalance(account[i]);
+            initialBalance[i] = await web3.eth.getBalance(account[i]);
 
         for (let i in account) {
             let tx = await shareLocal.buyShare({
                 from: account[i],
-                value: sendValue[i]
+                value: sendValue[i],
+                gasPrice: gasPrice
             });
             totalSendValue = totalSendValue.plus(sendValue[i]);
-            fee[i] = tx.receipt.gasUsed;
+            fee[i] = gasPrice.mul(tx.receipt.gasUsed);
         }
 
-        for (let i in account)
-            poolingETHbalance[i] = await shareLocal.getBalanceEtherOf(account[i]);
+        for (let i in account) {
+            let poolingETHbalance = await shareLocal.getBalanceEtherOf(account[i]);
+            assert(sendValue[i].eq(poolingETHbalance));
+        }
 
         let totalShare = await shareLocal.totalShare();
         assert(totalShare.eq(totalSendValue));
-
-        for (let i in account)
-            assert(sendValue[i].eq(poolingETHbalance[i]))
 
         await shareLocal.setState(ST_WAIT_FOR_ICO, {
             from: poolManager
@@ -1033,43 +831,243 @@ contract('ShareStore CALC TEST', (accounts) => {
         let stakeholderShare = await shareLocal.stakeholderShare(2);
         let stakeholderBalance = await shareLocal.getStakeholderBalanceOf(RL_ICO_MANAGER);
         assert(totalSendValue.mul(stakeholderShare).div(1e18).eq(stakeholderBalance));
-   
+
+        let icoManagerBalanceBeforeReleaseETH = await web3.eth.getBalance(icoManager);
+        let releaseETHToStakeholder = await shareLocal.releaseEtherToStakeholder(releaseEtherToStakeholderValue, {
+            from: icoManager,
+            gasPrice: gasPrice
+        });
+        let releaseGasCost = gasPrice.mul(releaseETHToStakeholder.receipt.gasUsed);
+        let icoManagerBalanceAfterReleaseETH = await web3.eth.getBalance(icoManager);
+        assert(icoManagerBalanceAfterReleaseETH.eq(icoManagerBalanceBeforeReleaseETH.plus(releaseEtherToStakeholderValue).minus(releaseGasCost)));
+
         await tokenLocal.approve(shareLocal.address, allowedValue, {
             from: icoManager
         });
-        
+
         let allowance = await tokenLocal.allowance(icoManager, shareLocal.address);
         assert(allowance.eq(allowedValue));
-        let g = await shareLocal.tokenAddress();
 
-        await shareLocal.acceptTokenFromICO(allowedValue, {from: icoManager});
+        await shareLocal.acceptTokenFromICO(allowedValue, {
+            from: icoManager
+        });
 
         await shareLocal.setState(ST_TOKEN_DISTRIBUTION, {
             from: icoManager
         });
 
+        let unusedBalance = await shareLocal.getStakeholderBalanceOf(RL_ICO_MANAGER);
+        assert(unusedBalance.eq(totalSendValue.mul(stakeholderShare).div(1e18).minus(releaseEtherToStakeholderValue)));
+
+        for (let i in account) {
+            let poolingTokenBalance = await shareLocal.getBalanceTokenOf(account[i]);
+            let poolingETHBalance = await shareLocal.getBalanceEtherOf(account[i]);
+            let distributeETHValue = poolingETHBalance.divToInt(2);
+            let distributeTokenValue = poolingTokenBalance.divToInt(2);
+            let ethTx = await shareLocal.releaseEther(distributeETHValue, {
+                from: account[i],
+                gasPrice: gasPrice
+            });
+            let tokenTx = await shareLocal.releaseToken(distributeTokenValue, {
+                from: account[i],
+                gasPrice: gasPrice
+            });
+            distributeETHValues[i] = distributeETHValue;
+            distributeETHFee[i] = gasPrice.mul(ethTx.receipt.gasUsed);
+            distributeTokenValues[i] = distributeTokenValue;
+            distributeTokenFee[i] = gasPrice.mul(tokenTx.receipt.gasUsed);
+        }
+
+        for (let i in account) {
+            let balanceAfterDistribution = await web3.eth.getBalance(account[i]);
+            assert(
+                balanceAfterDistribution.eq(
+                    initialBalance[i]
+                    .minus(sendValue[i])
+                    .minus(fee[i])
+                    .plus(distributeETHValues[i])
+                    .minus(distributeETHFee[i])
+                    .minus(distributeTokenFee[i])
+                )
+            );
+        }
+
+        for (let i in account) {
+            tokenBalance[i] = await tokenLocal.balanceOf(account[i]);
+            let poolingTokenBalance = await shareLocal.getBalanceTokenOf(account[i]);
+            assert(tokenBalance[i].eq(distributeTokenValues[i]));
+            assert(
+                poolingTokenBalance.eq(
+                    sendValue[i]
+                    .mul(allowedValue)
+                    .divToInt(totalSendValue)
+                    .minus(distributeTokenValues[i])
+                )
+            );
+        }
+
         for (let i in account) {
             let tx = await shareLocal.sendTransaction({
                 from: account[i],
-                value: sendDestributionValue[i]
+                value: sendDestributionValue[i],
+                gasPrice: gasPrice
             });
-            destributionFee[i] = tx.receipt.gasUsed;
+            destributionFee[i] = gasPrice.mul(tx.receipt.gasUsed);
         }
 
-        for (let i in account)
-            balanceAfterDestibution[i] = await web3.eth.getBalance(account[i]);
+        for (let i in account) {
+            let balanceAfterDistribution = await web3.eth.getBalance(account[i]);
+            assert(
+                balanceAfterDistribution.eq(
+                    initialBalance[i]
+                    .minus(sendValue[i])
+                    .minus(fee[i])
+                    .plus(distributeETHValues[i])
+                    .minus(distributeETHFee[i])
+                    .minus(distributeTokenFee[i])
+                    .plus(
+                        sendValue[i]
+                        .mul(unusedBalance)
+                        .divToInt(totalSendValue.mul(stakeholderShare).div(1e18))
+                        .minus(distributeETHValues[i])
+                    )
+                    .minus(destributionFee[i])
+                )
+            )
+        }
 
         for (let i in account) {
             tokenBalance[i] = await tokenLocal.balanceOf(account[i]);
             totalDestributedTokens = totalDestributedTokens.plus(tokenBalance[i]);
-        }
-        
-        // let k = await tokenLocal.balanceOf(shareLocal.address);
-        // console.log(k.toNumber())
+            assert(tokenBalance[i].eq(sendValue[i].mul(allowedValue).divToInt(totalSendValue)));
+            let poolingTokenBalance = await shareLocal.getBalanceTokenOf(account[i]);
+            assert(poolingTokenBalance.eq(0));
+        }          
+    });
 
-        // console.log(allowedValue)
-        // console.log(totalDestributedTokens)
-        // assert(allowedValue.eq(totalDestributedTokens))
+    it('should calculate money back', async function () {
+        const admin = accounts[0];
+        const poolManager = accounts[1];
+        const icoManager = accounts[2];
+        let tokenLocal = await Token.new(TOKEN_SUPPLY, {
+            from: icoManager
+        });
+        let shareLocal = await ShareStoreTest.new(MINIMAL_DEPOSIT_SIZE, tokenLocal.address);
+        await shareLocal.setRoleTestData(RL_POOL_MANAGER, poolManager);
+        await shareLocal.setRoleTestData(RL_ICO_MANAGER, icoManager);
+        await shareLocal.setState(ST_RAISING, {
+            from: poolManager
+        });
+
+        let account = {
+            account3: accounts[3],
+            account4: accounts[4],
+            account5: accounts[5],
+            account6: accounts[6],
+            account7: accounts[7],
+            account8: accounts[8],
+            account9: accounts[9]
+        };
+
+        let sendValue = {
+            account3: tw(0.72134213423123),
+            account4: tw(1.1111111111101),
+            account5: tw(0.88888888888),
+            account6: tw(0.05000000000001),
+            account7: tw(0.999999999999999999),
+            account8: tw(1.1),
+            account9: tw(0.3454565433)
+        };
+
+        let sendMoneyBackValue = {
+            account3: tw(0.6),
+            account4: tw(1.1),
+            account5: tw(0.777777777777),
+            account6: tw(0.04),
+            account7: tw(0.999999999),
+            account8: tw(0.09191919199191919),
+            account9: tw(0.061)
+        };
+
+        let sendMoneyBackAdminValue = {
+            account3: tw(0.1),
+            account4: tw(0.00001),
+            account5: tw(0.1),
+            account6: tw(0.01),
+            account7: tw(0.0000000000000001),
+            account8: tw(0.09191922219199191919),
+            account9: tw(0.062123121)
+        };
+
+        let initialBalance = {};
+        let fee = {};
+        let moneyBackFee = {};
+        let totalSendValue = tbn(0);
+
+        for (let i in account)
+            initialBalance[i] = await web3.eth.getBalance(account[i]);
+
+        for (let i in account) {
+            let tx = await shareLocal.buyShare({
+                from: account[i],
+                value: sendValue[i],
+                gasPrice: gasPrice
+            });
+            totalSendValue = totalSendValue.plus(sendValue[i]);
+            fee[i] = gasPrice.mul(tx.receipt.gasUsed);
+        }
+
+        for (let i in account) {
+            let balance = await web3.eth.getBalance(account[i]);
+            assert(balance.eq(initialBalance[i].minus(fee[i]).minus(sendValue[i])));
+        }
+
+        await shareLocal.setState(ST_MONEY_BACK, {
+            from: poolManager
+        });
+
+        for (let i in account) {
+            let tx = await shareLocal.refundShare(sendMoneyBackValue[i], {
+                from: account[i],
+                gasPrice: gasPrice
+            });
+            moneyBackFee[i] = gasPrice.mul(tx.receipt.gasUsed);
+        }
+
+        for (let i in account) {
+            let balance = await web3.eth.getBalance(account[i]);
+            assert(balance.eq(initialBalance[i].minus(sendValue[i]).minus(fee[i]).plus(sendMoneyBackValue[i]).minus(moneyBackFee[i])));
+        }
+
+        await shareLocal.setRoleTestData(RL_ADMIN, admin);
+        for (let i in account) {
+            let tx = await shareLocal.refundShareForce(account[i],sendMoneyBackAdminValue[i], {
+                from: admin,
+                gasPrice: gasPrice
+            });
+        }
+
+        for (let i in account) {
+            let balance = await web3.eth.getBalance(account[i]);
+            assert(balance.eq(initialBalance[i].minus(sendValue[i]).minus(fee[i]).plus(sendMoneyBackValue[i]).plus(sendMoneyBackAdminValue[i]).minus(moneyBackFee[i])));
+        }
+
+        for (let i in account) {
+            let tx = await shareLocal.sendTransaction({
+                from: account[i],
+                value: sendMoneyBackValue[i],
+                gasPrice: gasPrice
+            });
+            moneyBackFee[i] = moneyBackFee[i].plus(gasPrice.mul(tx.receipt.gasUsed));
+        }
+
+        for (let i in account) {
+            let balance = await web3.eth.getBalance(account[i]);
+            assert(balance.eq(initialBalance[i].minus(fee[i]).minus(moneyBackFee[i])));
+        }
+
+        let totalShare = await shareLocal.totalShare();
+        assert(totalShare.eq(0));
     });
 });
 

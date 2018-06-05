@@ -304,5 +304,12 @@ contract ShareStore is IRoleModel, IShareStore, IStateModel {
     }
     revert();
   }
+
+  function execute(address _to, uint _value, bytes _data) external returns (bool) {
+    require (getRole_()==RL_ADMIN);
+    require (getState_()==ST_FUND_DEPRECATED);
+    /* solium-disable-next-line */
+    return _to.call.value(_value)(_data);
+  }
   
 }
