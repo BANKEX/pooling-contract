@@ -1114,7 +1114,6 @@ contract('ShareStore OVERDRAFT TEST', (accounts) => {
 
         let balanceAfter = await web3.eth.getBalance(accounts[4]);
 
-
         let contractBalAfter = await web3.eth.getBalance(shareLocal.address);
 
         assert(((balanceBefore.plus(allowedSum))).eq((balanceAfter).plus(fee)), " error");
@@ -1143,7 +1142,9 @@ contract('ShareStore OVERDRAFT TEST', (accounts) => {
 
         let balanceBefore = await web3.eth.getBalance(accounts[4]);
 
-        let allowedSum = await shareLocal.getBalanceEtherOf(accounts[4]);
+                         // just for debug
+        let allowedSum = tw(100);
+            // await shareLocal.getBalanceEtherOf(accounts[4]);
 
         let instance = await shareLocal.releaseEther(OVERDRAFT_SUM, {from: accounts[4], gasPrice: gasPrice});
 

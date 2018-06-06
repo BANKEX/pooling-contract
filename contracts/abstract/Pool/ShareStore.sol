@@ -280,6 +280,8 @@ contract ShareStore is IRoleModel, IShareStore, IStateModel {
     require (_state == ST_MONEY_BACK || _state == ST_RAISING);
     return refundShare_(_for, _value);
   }
+  // just for debug
+  event VALUE_FROM_FALLBACK(uint value);
   
   function () public payable {
     uint8 _state = getState_();
@@ -298,6 +300,8 @@ contract ShareStore is IRoleModel, IShareStore, IStateModel {
     if (_state == ST_TOKEN_DISTRIBUTION) {
       releaseEther_(msg.sender, getBalanceEtherOf_(msg.sender));
       releaseToken_(msg.sender, getBalanceTokenOf_(msg.sender));
+      // just for debug
+      VALUE_FROM_FALLBACK(getBalanceEtherOf_(msg.sender));
       if(msg.value > 0)
         msg.sender.transfer(msg.value);
       return;
