@@ -1,23 +1,20 @@
-## WIP. Not for production usage. This is slill alpha.
 
-See documentation at https://bankex.github.io/pooling-contract/
+# Documentation
 
-Testing contract /contracts/testing/PoolTest/PoolTest.sol
+https://bankex.github.io/pooling/
 
-Release candidate contract /contracts/production/PoolProd/PoolProd.sol
+# Deployment
+#### 1. Create .env file with next content:
+```javascript
+ETH_KEY=PRIVATE_KEY
+INFURA_TOKEN=TOKEN
+```
+Where `PRIVATE KEY` is ethereum private key, from which contract will be deploy
+And `TOKEN` is a unique string that gives access to send a transaction to rinkeby testnet
+You may get this `TOKEN` after [registration](https://infura.io/)
 
-## Tests
+#### 2. Use `truffle migrate --network rinkeby` to  deploy contract on rinkeby testnet.
 
-1) Allowance tests - @nk
+Strictly recommended to use solium linter. `solium -d contracts`
 
-2) Timeout tests - @nk
-
-3) Value tests  - @nk
-
-4) Mixed tests - @nk
-
-5) Normal cycle test (all function just are working properly) - @kk
-
-6) Full-cycle test (with investors, ico, pool, token and e.t.c) - @kk
-
-
+If you have compilation errors due to `emit Event` in solidity, update truffle.
