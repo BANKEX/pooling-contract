@@ -288,34 +288,41 @@ contract ShareStore is IRoleModel, IShareStore, IStateModel {
   * If current state = ST_TOKEN_DISTRIBUTION - will reurn all ETH and Tokens that msg.sender has on balance
   * in case of ST_MONEY_BACK or ST_TOKEN_DISTRIBUTION all ETH sum will be sent back (sum to trigger this function)
   */
-function () public payable {
- uint8 _state = getState_();
- if (_state == ST_RAISING){
-   buyShare_(_state);
-   return;
- }
+  function () public payable {
+    uint8 _state = getState_();
+    if (_state == ST_RAISING){
+      buyShare_(_state);
+      return;
+    }
 
- if (_state == ST_MONEY_BACK) {
-   refundShare_(msg.sender, share[msg.sender]);
-   if(msg.value > 0)
-     msg.sender.transfer(msg.value);
-   return;
- }
+    if (_state == ST_MONEY_BACK) {
+      refundShare_(msg.sender, share[msg.sender]);
+      if(msg.value > 0)
+        msg.sender.transfer(msg.value);
+      return;
+    }
 
- if (_state == ST_TOKEN_DISTRIBUTION) {
-   releaseEther_(msg.sender, getBalanceEtherOf_(msg.sender));
-   releaseToken_(msg.sender, getBalanceTokenOf_(msg.sender));
-   if(msg.value > 0)
-     msg.sender.transfer(msg.value);
-   return;
- }
- revert();
-}
-
-function execute(address _to, uint _value, bytes _data) external returns (bool) {
- require (getRole_()==RL_ADMIN);
- require (getState_()==ST_FUND_DEPRECATED);
- /* solium-disable-next-line */
+    if (_state == ST_TOKEN_DISTRIBUTION) {
+      releaseEther_(msg.sender, getBalanceEtherOf_(msg.sender));
+      releaseToken_(msg.sender, getBalanceTokenOf_(msg.sender));
+      if(msg.value > 0)
+        msg.sender.transfer(msg.value);
+      return;
+    }
+    revert();
+  }
+  
+  /**
+  * @dev Allow to use functions of other contract from this contract
+  * @param _to address of contract to call
+  * @param _value amount of ETH in wei
+  * @param _data contract function call in bytes type
+  * @return result of operation, true if success
+  */
+  function execute(address _to, uint _value, bytes _data) external returns (bool) {
+    require (getRole_()==RL_ADMIN);
+    require (getState_()==ST_FUND_DEPRECATED);
+    /* solium-disable-next-line */
     return _to.call.value(_value)(_data);
   }
   
