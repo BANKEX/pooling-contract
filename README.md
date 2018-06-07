@@ -1,4 +1,3 @@
-
 # Documentation
 
 https://bankex.github.io/pooling/
@@ -9,12 +8,12 @@ https://bankex.github.io/pooling/
 ETH_KEY=PRIVATE_KEY
 INFURA_TOKEN=TOKEN
 ```
-Where `PRIVATE KEY` is ethereum private key, from which contract will be deploy
-And `TOKEN` is a unique string that gives access to send a transaction to rinkeby testnet
-You may get this `TOKEN` after [registration](https://infura.io/)
+Where `PRIVATE KEY` is ethereum private key, from which contract will be deploy                   
+And `TOKEN` is a unique string that gives access to send a transaction to rinkeby testnet             
+You may get this `TOKEN` after [registration](https://infura.io/)        
 
 #### 2. Use `truffle migrate --network rinkeby` to  deploy contract on rinkeby testnet.
-
+---
 Strictly recommended to use solium linter. `solium -d contracts`
 
 If you have compilation errors due to `emit Event` in solidity, update truffle.
