@@ -9,13 +9,34 @@ import "../../libs/math/SafeMath.sol";
 
 contract StateModel is IRoleModel, IShareStore, IStateModel, ITimeMachine {
   using SafeMath for uint;
+  /**
+   * @dev time to start accepting ETH from investors
+   */
   uint public launchTimestamp;
 
+  /**
+   * @dev time to raise ETH for ICO
+   */
   uint public raisingPeriod;
+
+  /**
+   * @dev time to wait tokens from ICO manager
+   */
   uint public icoPeriod;
+
+  /**
+   * @dev time to distribute tokens and remaining ETH to investors
+   */
   uint public distributionPeriod;
 
+  /**
+   * @dev minimal collected fund in ETH
+   */
   uint public minimalFundSize;
+  
+  /**
+   * @dev maximal collected fund in ETH
+   */
   uint public maximalFundSize;
   
   uint8 internal initialState_;
@@ -28,7 +49,7 @@ contract StateModel is IRoleModel, IShareStore, IStateModel, ITimeMachine {
   function getTimeState_() internal view returns (uint8) {
     uint _launchTimestamp = launchTimestamp;
     uint _relativeTimestamp = getTimestamp_() - _launchTimestamp;
-    if (_launchTimestamp ==0 )
+    if (_launchTimestamp == 0)
       return TST_DEFAULT;
     if (_relativeTimestamp < raisingPeriod)
       return TST_RAISING;
@@ -125,7 +146,7 @@ contract StateModel is IRoleModel, IShareStore, IStateModel, ITimeMachine {
     }
 
     if (_stateNew == ST_WAIT_FOR_ICO) {
-      if ((_role == RL_POOL_MANAGER ||  _role == RL_ICO_MANAGER) && (_raisingState == RST_COLLECTED)) {
+      if ((_role == RL_POOL_MANAGER || _role == RL_ICO_MANAGER) && (_raisingState == RST_COLLECTED)) {
         initialState_ = ST_WAIT_FOR_ICO;
         return true;
       }
