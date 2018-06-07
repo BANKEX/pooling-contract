@@ -1102,6 +1102,8 @@ contract('ShareStore OVERDRAFT TEST', (accounts) => {
         await shareLocal.setState(ST_TOKEN_DISTRIBUTION, {from: accounts[1]});
         assert(ST_TOKEN_DISTRIBUTION.eq(await shareLocal.getState()), "state error");
 
+        let contractBalBefore = await web3.eth.getBalance(shareLocal.address);
+
         let balanceBefore = await web3.eth.getBalance(accounts[4]);
 
         let allowedSum = await shareLocal.getBalanceEtherOf(accounts[4]);
@@ -1112,61 +1114,78 @@ contract('ShareStore OVERDRAFT TEST', (accounts) => {
 
         let balanceAfter = await web3.eth.getBalance(accounts[4]);
 
+        let contractBalAfter = await web3.eth.getBalance(shareLocal.address);
+
         assert(((balanceBefore.plus(allowedSum))).eq((balanceAfter).plus(fee)), " error");
+
+        assert(contractBalBefore.eq(contractBalAfter.plus(allowedSum)), "test ");
+
+        // balance
 
     });
 
-    // it('should not work with overdraft sum when releaseToken', async function () {
-    //     let tokenLocal = await Token.new(TOKEN_SUPPLY, {from: accounts[1]});
-    //     let shareLocal = await ShareStoreTest.new(MINIMAL_DEPOSIT_SIZE, tokenLocal.address);
-    //     await shareLocal.setRoleTestData(RL_POOL_MANAGER, accounts[0]);
-    //     await shareLocal.setState(ST_RAISING, {from: accounts[0]});
-    //     await payByAccounts(tw(1), shareLocal);
-    //     await shareLocal.setRoleTestData(RL_ICO_MANAGER, accounts[1]);
-    //     await shareLocal.setState(ST_WAIT_FOR_ICO, {from: accounts[1]});
-    //     await tokenLocal.approve(shareLocal.address, TOKEN_SUPPLY, {from: accounts[1]});
-    //     let allowedTokens = await tokenLocal.allowance(accounts[1], shareLocal.address);
-    //     await shareLocal.acceptTokenFromICO(allowedTokens, {from: accounts[1]});
-    //     let allowedSum = await shareLocal.getBalanceTokenOf(accounts[4]);
-    //     await shareLocal.setState(ST_TOKEN_DISTRIBUTION, {from: accounts[1]});
-    //     assert(ST_TOKEN_DISTRIBUTION.eq(await shareLocal.getState()));
-    //
-    //     await shareLocal.releaseToken(OVERDRAFT_SUM, {from: accounts[4]});
-    //
-    //     assert(allowedSum.eq(await shareLocal.getBalanceTokenOf(accounts[4])));
-    // });
-    // it('should not work with overdraft sum when acceptToken', async function () {
-    //     let tokenLocal = await Token.new(TOKEN_SUPPLY, {from: accounts[1]});
-    //     let shareLocal = await ShareStoreTest.new(MINIMAL_DEPOSIT_SIZE, tokenLocal.address);
-    //     await shareLocal.setRoleTestData(RL_POOL_MANAGER, accounts[0]);
-    //     await shareLocal.setState(ST_RAISING, {from: accounts[0]});
-    //     await payByAccounts(tw(1), shareLocal);
-    //     await shareLocal.setRoleTestData(RL_ICO_MANAGER, accounts[1]);
-    //     await shareLocal.setState(ST_WAIT_FOR_ICO, {from: accounts[1]});
-    //     await tokenLocal.approve(shareLocal.address, TOKEN_SUPPLY, {from: accounts[1]});
-    //     try {
-    //         await shareLocal.acceptTokenFromICO(OVERDRAFT_SUM, {from: accounts[1]});
-    //     } catch (e) {
-    //     }
-    //
-    // });
-    // it('should not work with overdraft sum when refundShare', async function () {
-    //     let tokenLocal = await Token.new(TOKEN_SUPPLY, {from: accounts[1]});
-    //     let shareLocal = await ShareStoreTest.new(MINIMAL_DEPOSIT_SIZE, tokenLocal.address);
-    //     await shareLocal.setRoleTestData(RL_POOL_MANAGER, accounts[0]);
-    //     await shareLocal.setState(ST_RAISING, {from: accounts[0]});
-    //     await payByAccounts(tw(1), shareLocal);
-    //     await shareLocal.setRoleTestData(RL_ICO_MANAGER, accounts[1]);
-    //     await shareLocal.setState(ST_MONEY_BACK, {from: accounts[1]});
-    //     try {
-    //         await shareLocal.refundShare(OVERDRAFT_SUM, {from: accounts[4]});
-    //     } catch (e) {
-    //     }
-    // });
-    // it('should not work with overdraft sum when refundShareForce', async function () {
-    // });
-    // it('should not work with overdraft sum when realeseTokenForce', async function () {
-    // });
-    // it('should not work with overdraft sum when releaseEtherForce', async function () {
-    // });
+    it('should not work with overdraft sum when releaseToken', async function () {
+        let tokenLocal = await Token.new(TOKEN_SUPPLY, {from: accounts[1]});
+        let shareLocal = await ShareStoreTest.new(MINIMAL_DEPOSIT_SIZE, tokenLocal.address);
+        await shareLocal.setRoleTestData(RL_POOL_MANAGER, accounts[0]);
+        await shareLocal.setState(ST_RAISING, {from: accounts[0]});
+        await payByAccounts(tw(1), shareLocal);
+        await shareLocal.setRoleTestData(RL_ICO_MANAGER, accounts[1]);
+        await shareLocal.setState(ST_WAIT_FOR_ICO, {from: accounts[1]});
+        await tokenLocal.approve(shareLocal.address, TOKEN_SUPPLY, {from: accounts[1]});
+        let allowedTokens = await tokenLocal.allowance(accounts[1], shareLocal.address);
+        await shareLocal.acceptTokenFromICO(allowedTokens, {from: accounts[1]});
+        await shareLocal.setState(ST_TOKEN_DISTRIBUTION, {from: accounts[1]});
+        assert(ST_TOKEN_DISTRIBUTION.eq(await shareLocal.getState()));
+
+        await shareLocal.releaseToken(OVERDRAFT_SUM, {from: accounts[4]});
+
+        let balanceBefore = await web3.eth.getBalance(accounts[4]);
+
+                         // just for debug
+        let allowedSum = tw(100);
+            // await shareLocal.getBalanceEtherOf(accounts[4]);
+
+        let instance = await shareLocal.releaseEther(OVERDRAFT_SUM, {from: accounts[4], gasPrice: gasPrice});
+
+        let fee = instance.receipt.gasUsed * gasPrice;
+
+        let balanceAfter = await web3.eth.getBalance(accounts[4]);
+
+        assert(((balanceBefore.plus(allowedSum))).eq((balanceAfter).plus(fee)), " error");
+    });
+    it('should not work with overdraft sum when acceptToken', async function () {
+        let tokenLocal = await Token.new(TOKEN_SUPPLY, {from: accounts[1]});
+        let shareLocal = await ShareStoreTest.new(MINIMAL_DEPOSIT_SIZE, tokenLocal.address);
+        await shareLocal.setRoleTestData(RL_POOL_MANAGER, accounts[0]);
+        await shareLocal.setState(ST_RAISING, {from: accounts[0]});
+        await payByAccounts(tw(1), shareLocal);
+        await shareLocal.setRoleTestData(RL_ICO_MANAGER, accounts[1]);
+        await shareLocal.setState(ST_WAIT_FOR_ICO, {from: accounts[1]});
+        await tokenLocal.approve(shareLocal.address, TOKEN_SUPPLY, {from: accounts[1]});
+        try {
+            await shareLocal.acceptTokenFromICO(OVERDRAFT_SUM, {from: accounts[1]});
+        } catch (e) {
+        }
+
+    });
+    it('should not work with overdraft sum when refundShare', async function () {
+        let tokenLocal = await Token.new(TOKEN_SUPPLY, {from: accounts[1]});
+        let shareLocal = await ShareStoreTest.new(MINIMAL_DEPOSIT_SIZE, tokenLocal.address);
+        await shareLocal.setRoleTestData(RL_POOL_MANAGER, accounts[0]);
+        await shareLocal.setState(ST_RAISING, {from: accounts[0]});
+        await payByAccounts(tw(1), shareLocal);
+        await shareLocal.setRoleTestData(RL_ICO_MANAGER, accounts[1]);
+        await shareLocal.setState(ST_MONEY_BACK, {from: accounts[1]});
+        try {
+            await shareLocal.refundShare(OVERDRAFT_SUM, {from: accounts[4]});
+        } catch (e) {
+        }
+    });
+    it('should not work with overdraft sum when refundShareForce', async function () {
+    });
+    it('should not work with overdraft sum when realeseTokenForce', async function () {
+    });
+    it('should not work with overdraft sum when releaseEtherForce', async function () {
+    });
 });
