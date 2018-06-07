@@ -69,15 +69,13 @@ contract StateModel is IRoleModel, IShareStore, IStateModel, ITimeMachine {
     return RST_FULL;
   }
 
-
   function getState_() internal view returns (uint8) {
     uint _initialState = initialState_;
     uint _timeState = getTimeState_();
     uint _raisingState = getRaisingState_();
     return getState_(_initialState, _timeState, _raisingState);
   }
-
-
+  
   function getState_(uint _initialState, uint _timeState, uint _raisingState) private pure returns (uint8) {
     if (_initialState == ST_DEFAULT) return ST_DEFAULT;
 
@@ -126,9 +124,7 @@ contract StateModel is IRoleModel, IShareStore, IStateModel, ITimeMachine {
 
     return ST_FUND_DEPRECATED;
   }
-
-
-
+  
   function setState_(uint _stateNew) internal returns (bool) {
     uint _initialState = initialState_;
     uint _timeState = getTimeState_();
@@ -180,7 +176,6 @@ contract StateModel is IRoleModel, IShareStore, IStateModel, ITimeMachine {
   function getState() external view returns(uint8) {
     return getState_();
   }
-  
   
   /**
   * @dev Allow to set state by stakeholders

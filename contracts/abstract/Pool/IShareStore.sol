@@ -1,7 +1,7 @@
 pragma solidity ^0.4.23;
 
 
-contract IShareStore{
+contract IShareStore {
   function getTotalShare_() internal view returns(uint);
 
   event BuyShare(address indexed addr, uint value);
