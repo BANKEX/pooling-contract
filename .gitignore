@@ -1,6 +1,7 @@
 doxity
 node_modules
 .idea/
+.env
 .vscode/
 .editorconfig
 build/
