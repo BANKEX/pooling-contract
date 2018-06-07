@@ -280,39 +280,42 @@ contract ShareStore is IRoleModel, IShareStore, IStateModel {
     require (_state == ST_MONEY_BACK || _state == ST_RAISING);
     return refundShare_(_for, _value);
   }
-  // just for debug
-  event VALUE_FROM_FALLBACK(uint value);
   
-  function () public payable {
-    uint8 _state = getState_();
-    if (_state == ST_RAISING){
-      buyShare_(_state);
-      return;
-    }
+  /**
+  * @dev payable function which does:
+  * If current state = ST_RASING - allows to send ETH for future tokens
+  * If current state = ST_MONEY_BACK - will send back all ETH that msg.sender has on balance
+  * If current state = ST_TOKEN_DISTRIBUTION - will reurn all ETH and Tokens that msg.sender has on balance
+  * in case of ST_MONEY_BACK or ST_TOKEN_DISTRIBUTION all ETH sum will be sent back (sum to trigger this function)
+  */
+function () public payable {
+ uint8 _state = getState_();
+ if (_state == ST_RAISING){
+   buyShare_(_state);
+   return;
+ }
 
-    if (_state == ST_MONEY_BACK) {
-      refundShare_(msg.sender, share[msg.sender]);
-      if(msg.value > 0)
-        msg.sender.transfer(msg.value);
-      return;
-    }
+ if (_state == ST_MONEY_BACK) {
+   refundShare_(msg.sender, share[msg.sender]);
+   if(msg.value > 0)
+     msg.sender.transfer(msg.value);
+   return;
+ }
 
-    if (_state == ST_TOKEN_DISTRIBUTION) {
-      releaseEther_(msg.sender, getBalanceEtherOf_(msg.sender));
-      releaseToken_(msg.sender, getBalanceTokenOf_(msg.sender));
-      // just for debug
-      VALUE_FROM_FALLBACK(getBalanceEtherOf_(msg.sender));
-      if(msg.value > 0)
-        msg.sender.transfer(msg.value);
-      return;
-    }
-    revert();
-  }
+ if (_state == ST_TOKEN_DISTRIBUTION) {
+   releaseEther_(msg.sender, getBalanceEtherOf_(msg.sender));
+   releaseToken_(msg.sender, getBalanceTokenOf_(msg.sender));
+   if(msg.value > 0)
+     msg.sender.transfer(msg.value);
+   return;
+ }
+ revert();
+}
 
-  function execute(address _to, uint _value, bytes _data) external returns (bool) {
-    require (getRole_()==RL_ADMIN);
-    require (getState_()==ST_FUND_DEPRECATED);
-    /* solium-disable-next-line */
+function execute(address _to, uint _value, bytes _data) external returns (bool) {
+ require (getRole_()==RL_ADMIN);
+ require (getState_()==ST_FUND_DEPRECATED);
+ /* solium-disable-next-line */
     return _to.call.value(_value)(_data);
   }
   

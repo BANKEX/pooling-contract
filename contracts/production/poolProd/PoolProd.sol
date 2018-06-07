@@ -17,6 +17,7 @@ contract PoolProd is Pool, TimeMachineP {
               address _poolManagerAddress,
               address _ICOManagerAddress,
               address _paybotAddress) public {
+    
     raisingPeriod = _raisingPeriod;
     icoPeriod = _icoPeriod;
     distributionPeriod = _distributionPeriod;
