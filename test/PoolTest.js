@@ -83,4 +83,50 @@ contract('Pool Common test', function (accounts) {
         });
 
     });
+
+    describe('Store Tests', function () {
+
+        it('should allow to release tokens to investors', async function () {
+            resetBeforeTest();
+            await pool.setState(ST_RAISING, {from: POOL_MANAGER});
+            assert(ST_RAISING.eq(await pool.getState()));
+
+            await pool.sendTransaction({value: tw(1), from: accounts[4]});
+            await pool.sendTransaction({value: tw(1), from: accounts[5]});
+            await pool.sendTransaction({value: tw(1), from: accounts[6]});
+            // more than 3 transactions make revert
+
+            // await pool.sendTransaction({value: tw(1), from: accounts[7]});
+            // await pool.sendTransaction({value: tw(1), from: accounts[8]});
+            // await pool.sendTransaction({value: tw(1), from: accounts[9]});
+            // await pool.sendTransaction({value: tw(1), from: accounts[10]});
+
+            // for (let i = 7; i < 10; i++) {
+            //     await pool.sendTransaction({value: tw(1), from: accounts[i]});
+            // }
+            // for (let i = 4; i < 9; i++) {
+            //     await pool.sendTransaction({value: tw(1), from: accounts[i]});
+            // }
+            // await pool.setState(ST_WAIT_FOR_ICO, {from: ICO_MANAGER});
+            // let balBefore = await web3.eth.getBalance(ICO_MANAGER);
+            // let allowedBalance = await pool.getStakeholderBalanceOf(RL_ICO_MANAGER);
+            // let instance = await pool.releaseEtherToStakeholder(allowedBalance, {
+            //     from: ICO_MANAGER,
+            //     gasPrice: gasPrice
+            // });
+            // let gasUsed = instance.receipt.gasUsed;
+            // let transactionCost = gasUsed.mul(gasPrice);
+            // let balAfter = (await web3.eth.getBalance(ICO_MANAGER));
+            // assert(balBefore.eq((balAfter.minus(allowedBalance)).plus(transactionCost)));
+            //
+            // await token.approve(shareLocal.address, TOKEN_SUPPLY, {from: ICO_MANAGER});
+            // let allowedTokens = await token.allowance(ICO_MANAGER, pool.address);
+            // await pool.acceptTokenFromICO(allowedTokens);
+            // await pool.setState(ST_TOKEN_DISTRIBUTION, {from: ADMIN});
+            // let tokenBalance = await pool.getBalanceTokenOf(accounts[4]);
+            // await pool.releaseToken(tokenBalance, {from: accounts[4]});
+            // assert(tokenBalance.eq(await token.balanceOf(accounts[4])));
+        });
+
+    });
 });
