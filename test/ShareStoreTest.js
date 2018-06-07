@@ -3,7 +3,137 @@ const Token = artifacts.require("./TestToken.sol");
 
 const web3 = global.web3;
 
-
+const IERC20_ABI = [
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "spender",
+				"type": "address"
+			},
+			{
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "approve",
+		"outputs": [
+			{
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "totalSupply",
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "from",
+				"type": "address"
+			},
+			{
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "transferFrom",
+		"outputs": [
+			{
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "who",
+				"type": "address"
+			}
+		],
+		"name": "balanceOf",
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "transfer",
+		"outputs": [
+			{
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"name": "spender",
+				"type": "address"
+			}
+		],
+		"name": "allowance",
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	}
+];
 
 const tbn = v => web3.toBigNumber(v);
 const fbn = v => v.toString();
@@ -262,11 +392,12 @@ contract('ShareStore COMMON TEST', (accounts) => {
     it("should allow to take ether and tokens after depricated time", async function () {
         const gasPrice = tw("3e-7");
         let tokenLocal = await Token.new(TOKEN_SUPPLY);
+        let admin = accounts[9];
         let shareLocal = await ShareStoreTest.new(MINIMAL_DEPOSIT_SIZE, tokenLocal.address);
         await shareLocal.setRoleTestData(RL_POOL_MANAGER, accounts[0]);
         await shareLocal.setState(ST_RAISING, {from: accounts[0]});
         assert(ST_RAISING.eq(await shareLocal.getState()));
-        for (let i = 3; i < 10; i++) {
+        for (let i = 3; i < 8; i++) {
             await shareLocal.sendTransaction({value: INVESTOR_SUM_PAY, from: accounts[i]});
         }
 
@@ -313,7 +444,7 @@ contract('ShareStore COMMON TEST', (accounts) => {
             let eb = await shareLocal.getBalanceEtherOf(accounts[i]);
             let instnace2 = await shareLocal.releaseEther(eb, {from: accounts[i], gasPrice: gasPrice});
             let gasUsedTwo = instnace1.receipt.gasUsed + instnace2.receipt.gasUsed;
-            feeFirst.push(gasUsedTwo * gasPrice);
+            feeFirst.push(gasPrice.mul(gasUsedTwo));
             allowedSum.push(eb);
             allowedTokensOF.push(tb);
         }
@@ -333,15 +464,20 @@ contract('ShareStore COMMON TEST', (accounts) => {
             assert((await tokenLocal.balanceOf(accounts[i])).eq(allowedTokensOF[i]));
         }
 
-        // await shareLocal.setState(ST_WAIT_FOR_ICO);
-        // assert(ST_WAIT_FOR_ICO.eq(await shareLocal.getState()));
-        // let thisbb = await shareLocal.getStakeholderBalanceOf(RL_ICO_MANAGER);
-        // await shareLocal.releaseEtherToStakeholder(900, {
-        //     gasPrice: gasPrice,
-        // });
-
-        //  Problem with parts
-        assert.equal(1, 2, "Problem with parts need to make functions for it!")
+        await shareLocal.setRoleTestData(RL_ADMIN, admin);
+        await shareLocal.setState(ST_FUND_DEPRECATED);
+        let adminBalance = await web3.eth.getBalance(admin);
+        let adminTokenBalance = await tokenLocal.balanceOf(admin);
+        let ethContractBalance = await web3.eth.getBalance(shareLocal.address);
+        let tokenContractBalance = await tokenLocal.balanceOf(shareLocal.address);
+        let data = String((web3.eth.contract(IERC20_ABI).at(tokenLocal).transfer.getData(admin, tokenContractBalance)));
+        let depricaction_tx1 = await shareLocal.execute(tokenLocal.address, 0, data, {from: admin, gasPrice: gasPrice});
+        let depricaction_tx2 = await shareLocal.execute(admin, ethContractBalance, 0, {from: admin, gasPrice: gasPrice});
+        let gasCost = gasPrice.mul(depricaction_tx1.receipt.gasUsed).plus(gasPrice.mul(depricaction_tx2.receipt.gasUsed));
+        let adminBalanceAfterDepricated = await web3.eth.getBalance(admin);
+        let adminTokenBalanceAfterDepricated = await tokenLocal.balanceOf(admin);
+        assert(adminBalanceAfterDepricated.eq(adminBalance.plus(ethContractBalance).minus(gasCost)));
+        assert(adminTokenBalanceAfterDepricated.eq(adminTokenBalance.plus(tokenContractBalance)));
     });
 
     it("should allow to take stakeholders parts after wait for ico", async function () {
