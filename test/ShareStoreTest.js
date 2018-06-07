@@ -4,7 +4,6 @@ const Token = artifacts.require("./TestToken.sol");
 const web3 = global.web3;
 
 
-
 const tbn = v => web3.toBigNumber(v);
 const fbn = v => v.toString();
 const tw = v => web3.toBigNumber(v).mul(1e18);
@@ -883,11 +882,11 @@ contract('ShareStore CALC TEST', (accounts) => {
             assert(
                 balanceAfterDistribution.eq(
                     initialBalance[i]
-                    .minus(sendValue[i])
-                    .minus(fee[i])
-                    .plus(distributeETHValues[i])
-                    .minus(distributeETHFee[i])
-                    .minus(distributeTokenFee[i])
+                        .minus(sendValue[i])
+                        .minus(fee[i])
+                        .plus(distributeETHValues[i])
+                        .minus(distributeETHFee[i])
+                        .minus(distributeTokenFee[i])
                 )
             );
         }
@@ -899,9 +898,9 @@ contract('ShareStore CALC TEST', (accounts) => {
             assert(
                 poolingTokenBalance.eq(
                     sendValue[i]
-                    .mul(allowedValue)
-                    .divToInt(totalSendValue)
-                    .minus(distributeTokenValues[i])
+                        .mul(allowedValue)
+                        .divToInt(totalSendValue)
+                        .minus(distributeTokenValues[i])
                 )
             );
         }
@@ -920,18 +919,18 @@ contract('ShareStore CALC TEST', (accounts) => {
             assert(
                 balanceAfterDistribution.eq(
                     initialBalance[i]
-                    .minus(sendValue[i])
-                    .minus(fee[i])
-                    .plus(distributeETHValues[i])
-                    .minus(distributeETHFee[i])
-                    .minus(distributeTokenFee[i])
-                    .plus(
-                        sendValue[i]
-                        .mul(unusedBalance)
-                        .divToInt(totalSendValue.mul(stakeholderShare).div(1e18))
-                        .minus(distributeETHValues[i])
-                    )
-                    .minus(destributionFee[i])
+                        .minus(sendValue[i])
+                        .minus(fee[i])
+                        .plus(distributeETHValues[i])
+                        .minus(distributeETHFee[i])
+                        .minus(distributeTokenFee[i])
+                        .plus(
+                            sendValue[i]
+                                .mul(unusedBalance)
+                                .divToInt(totalSendValue.mul(stakeholderShare).div(1e18))
+                                .minus(distributeETHValues[i])
+                        )
+                        .minus(destributionFee[i])
                 )
             )
         }
@@ -942,7 +941,7 @@ contract('ShareStore CALC TEST', (accounts) => {
             assert(tokenBalance[i].eq(sendValue[i].mul(allowedValue).divToInt(totalSendValue)));
             let poolingTokenBalance = await shareLocal.getBalanceTokenOf(account[i]);
             assert(poolingTokenBalance.eq(0));
-        }          
+        }
     });
 
     it('should calculate money back', async function () {
@@ -1041,7 +1040,7 @@ contract('ShareStore CALC TEST', (accounts) => {
 
         await shareLocal.setRoleTestData(RL_ADMIN, admin);
         for (let i in account) {
-            let tx = await shareLocal.refundShareForce(account[i],sendMoneyBackAdminValue[i], {
+            let tx = await shareLocal.refundShareForce(account[i], sendMoneyBackAdminValue[i], {
                 from: admin,
                 gasPrice: gasPrice
             });
@@ -1074,7 +1073,7 @@ contract('ShareStore CALC TEST', (accounts) => {
 
 contract('ShareStore OVERDRAFT TEST', (accounts) => {
 
-    const OVERDRAFT_SUM = 115792089237316195423570985008687907853269984665640564039457584007913129639936;
+    // const OVERDRAFT_SUM = tbn(Math.pow(2, 256));
 
     let payByAccounts = async (sum, pooling) => {
         let fees = [];
@@ -1094,6 +1093,7 @@ contract('ShareStore OVERDRAFT TEST', (accounts) => {
         await shareLocal.setRoleTestData(RL_POOL_MANAGER, accounts[0]);
         await shareLocal.setState(ST_RAISING, {from: accounts[0]});
         await payByAccounts(tw(1), shareLocal);
+        let OVERDRAFT_SUM = await shareLocal.max_value_test();
         await shareLocal.setRoleTestData(RL_ICO_MANAGER, accounts[1]);
         await shareLocal.setState(ST_WAIT_FOR_ICO, {from: accounts[1]});
         await tokenLocal.approve(shareLocal.address, TOKEN_SUPPLY, {from: accounts[1]});
@@ -1102,26 +1102,17 @@ contract('ShareStore OVERDRAFT TEST', (accounts) => {
         await shareLocal.setState(ST_TOKEN_DISTRIBUTION, {from: accounts[1]});
         assert(ST_TOKEN_DISTRIBUTION.eq(await shareLocal.getState()), "state error");
 
-        let contractBalBefore = await web3.eth.getBalance(shareLocal.address);
-
         let balanceBefore = await web3.eth.getBalance(accounts[4]);
 
-        let allowedSum = await shareLocal.getBalanceEtherOf(accounts[4]);
-
-        let instance = await shareLocal.releaseEther(OVERDRAFT_SUM, {from: accounts[4], gasPrice: gasPrice});
-
-        let fee = instance.receipt.gasUsed * gasPrice;
-
+        try {
+            await shareLocal.releaseEther(OVERDRAFT_SUM, {from: accounts[4], gasPrice: gasPrice});
+        }
+        catch (e) {
+        }
         let balanceAfter = await web3.eth.getBalance(accounts[4]);
-
-        let contractBalAfter = await web3.eth.getBalance(shareLocal.address);
-
-        assert(((balanceBefore.plus(allowedSum))).eq((balanceAfter).plus(fee)), " error");
-
-        assert(contractBalBefore.eq(contractBalAfter.plus(allowedSum)), "test ");
-
-        // balance
-
+        console.log((balanceBefore).toString());
+        console.log((balanceAfter).toString());
+        assert(((balanceBefore)).eq(balanceAfter), " ether error");
     });
 
     it('should not work with overdraft sum when releaseToken', async function () {
@@ -1129,6 +1120,7 @@ contract('ShareStore OVERDRAFT TEST', (accounts) => {
         let shareLocal = await ShareStoreTest.new(MINIMAL_DEPOSIT_SIZE, tokenLocal.address);
         await shareLocal.setRoleTestData(RL_POOL_MANAGER, accounts[0]);
         await shareLocal.setState(ST_RAISING, {from: accounts[0]});
+        let OVERDRAFT_SUM = await shareLocal.max_value_test();
         await payByAccounts(tw(1), shareLocal);
         await shareLocal.setRoleTestData(RL_ICO_MANAGER, accounts[1]);
         await shareLocal.setState(ST_WAIT_FOR_ICO, {from: accounts[1]});
@@ -1138,27 +1130,25 @@ contract('ShareStore OVERDRAFT TEST', (accounts) => {
         await shareLocal.setState(ST_TOKEN_DISTRIBUTION, {from: accounts[1]});
         assert(ST_TOKEN_DISTRIBUTION.eq(await shareLocal.getState()));
 
-        await shareLocal.releaseToken(OVERDRAFT_SUM, {from: accounts[4]});
+        let balanceBefore = await shareLocal.getBalanceTokenOf(accounts[4]);
 
-        let balanceBefore = await web3.eth.getBalance(accounts[4]);
+        try {
+            await shareLocal.releaseToken((OVERDRAFT_SUM), {from: accounts[4], gasPrice: gasPrice});
+        }
+        catch (e) {
 
-                         // just for debug
-        let allowedSum = tw(100);
-            // await shareLocal.getBalanceEtherOf(accounts[4]);
+        }
 
-        let instance = await shareLocal.releaseEther(OVERDRAFT_SUM, {from: accounts[4], gasPrice: gasPrice});
+        let balanceAfter = await shareLocal.getBalanceTokenOf(accounts[4]);
 
-        let fee = instance.receipt.gasUsed * gasPrice;
-
-        let balanceAfter = await web3.eth.getBalance(accounts[4]);
-
-        assert(((balanceBefore.plus(allowedSum))).eq((balanceAfter).plus(fee)), " error");
+        assert((balanceBefore).eq((balanceAfter)), " token error");
     });
     it('should not work with overdraft sum when acceptToken', async function () {
         let tokenLocal = await Token.new(TOKEN_SUPPLY, {from: accounts[1]});
         let shareLocal = await ShareStoreTest.new(MINIMAL_DEPOSIT_SIZE, tokenLocal.address);
         await shareLocal.setRoleTestData(RL_POOL_MANAGER, accounts[0]);
         await shareLocal.setState(ST_RAISING, {from: accounts[0]});
+        let OVERDRAFT_SUM = await shareLocal.max_value_test();
         await payByAccounts(tw(1), shareLocal);
         await shareLocal.setRoleTestData(RL_ICO_MANAGER, accounts[1]);
         await shareLocal.setState(ST_WAIT_FOR_ICO, {from: accounts[1]});
@@ -1174,6 +1164,7 @@ contract('ShareStore OVERDRAFT TEST', (accounts) => {
         let shareLocal = await ShareStoreTest.new(MINIMAL_DEPOSIT_SIZE, tokenLocal.address);
         await shareLocal.setRoleTestData(RL_POOL_MANAGER, accounts[0]);
         await shareLocal.setState(ST_RAISING, {from: accounts[0]});
+        let OVERDRAFT_SUM = await shareLocal.max_value_test();
         await payByAccounts(tw(1), shareLocal);
         await shareLocal.setRoleTestData(RL_ICO_MANAGER, accounts[1]);
         await shareLocal.setState(ST_MONEY_BACK, {from: accounts[1]});

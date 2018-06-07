@@ -3,7 +3,7 @@ pragma solidity ^0.4.23;
 import "../../abstract/Pool/Pool.sol";
 import "../../abstract/TimeMachine/TimeMachineT.sol";
 
-contract PoolProd is Pool, TimeMachineT {
+contract PoolTest is Pool, TimeMachineT {
   uint constant DECIMAL_MULTIPLIER = 1e18;
   
   constructor(uint _raisingPeriod, 
@@ -16,7 +16,8 @@ contract PoolProd is Pool, TimeMachineT {
               uint _poolManagerShare,
               address _poolManagerAddress,
               address _ICOManagerAddress,
-              address _paybotAddress) public {
+              address _paybotAddress,
+              address _tokenAddress) public {
     raisingPeriod = _raisingPeriod;
     icoPeriod = _icoPeriod;
     distributionPeriod = _distributionPeriod;
@@ -34,5 +35,7 @@ contract PoolProd is Pool, TimeMachineT {
     setRole_(RL_POOL_MANAGER, _poolManagerAddress);
     setRole_(RL_ICO_MANAGER, _ICOManagerAddress);
     setRole_(RL_PAYBOT, _paybotAddress);
+
+    tokenAddress = _tokenAddress;
   }
 }
