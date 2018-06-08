@@ -29,7 +29,8 @@ contract PoolProd is Pool, TimeMachineP {
               uint _poolManagerShare,
               address _poolManagerAddress,
               address _ICOManagerAddress,
-              address _paybotAddress) public {
+              address _paybotAddress,
+              address _tokenAddress) public {
     
     raisingPeriod = _raisingPeriod;
     icoPeriod = _icoPeriod;
@@ -48,5 +49,7 @@ contract PoolProd is Pool, TimeMachineP {
     setRole_(RL_POOL_MANAGER, _poolManagerAddress);
     setRole_(RL_ICO_MANAGER, _ICOManagerAddress);
     setRole_(RL_PAYBOT, _paybotAddress);
+
+    tokenAddress = _tokenAddress;
   }
 }
