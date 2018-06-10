@@ -101,12 +101,31 @@ contract('Pool Common test', function (accounts) {
     });
 
     describe('Store Tests', function () {
-        it('should allow to release tokens to investors', async function () {
+        it('should get total sent ETH', async function () {
+            let totalETH = tbn(0);
             await pool.setState(ST_RAISING, {from: POOL_MANAGER});
-            assert(ST_RAISING.eq(await pool.getState()));
+            for (let i in investors) {
+                await pool.sendTransaction({value: INVESTOR_SUM_PAY,from: investors[i]});
+                totalETH = totalETH.plus(INVESTOR_SUM_PAY);
+            }
+            let totalSentETH = await pool.totalShare();
+            assert(totalSentETH.eq(totalETH));
+        });
+        it('should get stakeholder balance', async function () {
+            await pool.setState(ST_RAISING, {from: POOL_MANAGER});
             for (let i in investors)
                 await pool.sendTransaction({value: INVESTOR_SUM_PAY,from: investors[i]});
-            let totalSendETH = await pool.totalShare();
+            let totalSentETH = await pool.totalShare();
+            await pool.setState(ST_WAIT_FOR_ICO, {from: ICO_MANAGER});
+            let allowedBalance = await pool.getStakeholderBalanceOf(RL_ICO_MANAGER);
+            let icoManagerPersentageShare = await pool.stakeholderShare(2);
+            let icoManagerETHShare = totalSentETH.mul(icoManagerPersentageShare).divToInt(1e18);
+            assert(allowedBalance.eq(icoManagerETHShare));
+        });
+        it('should release ether to stakeholder by ico manager', async function () {
+            await pool.setState(ST_RAISING, {from: POOL_MANAGER});
+            for (let i in investors)
+                await pool.sendTransaction({value: INVESTOR_SUM_PAY,from: investors[i]});
             await pool.setState(ST_WAIT_FOR_ICO, {from: ICO_MANAGER});
             let balBefore = await web3.eth.getBalance(ICO_MANAGER);
             let allowedBalance = await pool.getStakeholderBalanceOf(RL_ICO_MANAGER);
@@ -114,17 +133,46 @@ contract('Pool Common test', function (accounts) {
             let gasCost = gasPrice.mul(instance.receipt.gasUsed);
             let balAfter = await web3.eth.getBalance(ICO_MANAGER);
             assert(balBefore.eq((balAfter.minus(allowedBalance)).plus(gasCost)));
+        });
+        it('should release ether to stakeholder by admin', async function () {
+            await pool.setState(ST_RAISING, {from: POOL_MANAGER});
+            for (let i in investors)
+                await pool.sendTransaction({value: INVESTOR_SUM_PAY,from: investors[i]});
+            await pool.setState(ST_WAIT_FOR_ICO, {from: ICO_MANAGER});
+            let balBefore = await web3.eth.getBalance(ICO_MANAGER);
+            await pool.releaseEtherToStakeholderForce(RL_ICO_MANAGER, ICO_MANAGER_RELEASE_ETH, {from: ADMIN, gasPrice: gasPrice});
+            let balAfter = await web3.eth.getBalance(ICO_MANAGER);
+            assert(balAfter.eq((balBefore.plus(ICO_MANAGER_RELEASE_ETH))));
+        });
+
+        it('should approve and accept tokens from ICO', async function () {
+            await pool.setState(ST_RAISING, {from: POOL_MANAGER});
+            for (let i in investors)
+                await pool.sendTransaction({value: INVESTOR_SUM_PAY,from: investors[i]});
+            await pool.setState(ST_WAIT_FOR_ICO, {from: ICO_MANAGER});
+            let allowedBalance = await pool.getStakeholderBalanceOf(RL_ICO_MANAGER);
+            let instance = await pool.releaseEtherToStakeholder(allowedBalance, {from: ICO_MANAGER,gasPrice: gasPrice});
             await token.approve(pool.address, TOKEN_SUPPLY, {from: ICO_MANAGER});
             let allowedTokens = await token.allowance(ICO_MANAGER, pool.address);
             assert(allowedTokens.eq(TOKEN_SUPPLY));
             await pool.acceptTokenFromICO(allowedTokens, {from: ICO_MANAGER});
             let contractBalance = await token.balanceOf(pool.address);
             assert(TOKEN_SUPPLY.eq(contractBalance));
+        });
+        it('should allow to release tokens to investors', async function () {
+            await pool.setState(ST_RAISING, {from: POOL_MANAGER});
+            for (let i in investors)
+                await pool.sendTransaction({value: INVESTOR_SUM_PAY,from: investors[i]});
+            let totalSentETH = await pool.totalShare();
+            await pool.setState(ST_WAIT_FOR_ICO, {from: ICO_MANAGER});
+            let allowedBalance = await pool.getStakeholderBalanceOf(RL_ICO_MANAGER);
+            let instance = await pool.releaseEtherToStakeholder(allowedBalance, {from: ICO_MANAGER,gasPrice: gasPrice});
+            await token.approve(pool.address, TOKEN_SUPPLY, {from: ICO_MANAGER});
+            await pool.acceptTokenFromICO(TOKEN_SUPPLY, {from: ICO_MANAGER});
             await pool.setState(ST_TOKEN_DISTRIBUTION, {from: ADMIN});
-            assert(ST_TOKEN_DISTRIBUTION.eq(await pool.getState()));
             for (let i in investors) {
                 let poolingTokenBalance = await pool.getBalanceTokenOf(investors[i]);
-                assert(poolingTokenBalance.eq(INVESTOR_SUM_PAY.mul(allowedTokens).div(totalSendETH)));
+                assert(poolingTokenBalance.eq(INVESTOR_SUM_PAY.mul(TOKEN_SUPPLY).div(totalSentETH)));
                 await pool.releaseToken(poolingTokenBalance, {from: investors[i],gasPrice: gasPrice});
                 let erc20TokenBalance = await token.balanceOf(investors[i]);
                 assert(poolingTokenBalance.eq(erc20TokenBalance));
@@ -133,36 +181,18 @@ contract('Pool Common test', function (accounts) {
 
         it('should allow to release remaining ETH to investors', async function () {
             await pool.setState(ST_RAISING, {from: POOL_MANAGER});
-            assert(ST_RAISING.eq(await pool.getState()));
             for (let i in investors)
                 await pool.sendTransaction({value: INVESTOR_SUM_PAY,from: investors[i]});
-            let totalSendETH = await pool.totalShare();
+            let totalSentETH = await pool.totalShare();
             await pool.setState(ST_WAIT_FOR_ICO, {from: ICO_MANAGER});
-            let balBefore = await web3.eth.getBalance(ICO_MANAGER);
             let allowedBalance = await pool.getStakeholderBalanceOf(RL_ICO_MANAGER);
-            let icoManagerPersentageShare = await pool.stakeholderShare(2);
-            let icoManagerETHShare = totalSendETH.mul(icoManagerPersentageShare).divToInt(1e18);
-            assert(allowedBalance.eq(icoManagerETHShare));
             let instance = await pool.releaseEtherToStakeholder(ICO_MANAGER_RELEASE_ETH, {from: ICO_MANAGER,gasPrice: gasPrice});
-            let gasCost = gasPrice.mul(instance.receipt.gasUsed);
-            let balAfter = await web3.eth.getBalance(ICO_MANAGER);
-            assert(balAfter.eq((balBefore.plus(ICO_MANAGER_RELEASE_ETH)).minus(gasCost)));
             await token.approve(pool.address, TOKEN_SUPPLY, {from: ICO_MANAGER});
-            let allowedTokens = await token.allowance(ICO_MANAGER, pool.address);
-            assert(allowedTokens.eq(TOKEN_SUPPLY));
-            await pool.acceptTokenFromICO(allowedTokens, {from: ICO_MANAGER});
-            let contractBalance = await token.balanceOf(pool.address);
-            assert(TOKEN_SUPPLY.eq(contractBalance));
+            await pool.acceptTokenFromICO(TOKEN_SUPPLY, {from: ICO_MANAGER});
             await pool.setState(ST_TOKEN_DISTRIBUTION, {from: ADMIN});
-            assert(ST_TOKEN_DISTRIBUTION.eq(await pool.getState()));
             for (let i in investors) {
-                // Ниже неправильный BigNumber: BigNumber { s: 1, e: 16, c: [ 999, 99999999999998 ] }
-                // Если делать транзакцию - воспринимает только такой формат
                 let poolingETHBalance = await pool.getBalanceEtherOf(investors[i]);
                 let investorBalanceBefore = await web3.eth.getBalance(investors[i]);
-                console.log(poolingETHBalance)
-                console.log((totalSendETH.minus(ICO_MANAGER_RELEASE_ETH)).mul(INVESTOR_SUM_PAY).div(totalSendETH))
-                // assert(poolingETHBalance.eq((totalSendETH.minus(ICO_MANAGER_RELEASE_ETH)).div(totalSendETH).mul(INVESTOR_SUM_PAY)));
                 let tx = await pool.releaseEther(poolingETHBalance, {from: investors[i], gasPrice: gasPrice});
                 let gasCost = gasPrice.mul(tx.receipt.gasUsed);
                 let investorBalanceAfter = await web3.eth.getBalance(investors[i]);
@@ -170,42 +200,22 @@ contract('Pool Common test', function (accounts) {
             }
         });
         it('should allow to release ETH and Tokens by transaction sending', async function () {
-            await pool.setState(ST_RAISING, {
-                from: POOL_MANAGER
-            });
-            assert(ST_RAISING.eq(await pool.getState()));
+            await pool.setState(ST_RAISING, {from: POOL_MANAGER});
             for (let i in investors)
                 await pool.sendTransaction({value: INVESTOR_SUM_PAY,from: investors[i]});
-            let totalSendETH = await pool.totalShare();
+            let totalSentETH = await pool.totalShare();
             await pool.setState(ST_WAIT_FOR_ICO, {from: ICO_MANAGER});
-            let balBefore = await web3.eth.getBalance(ICO_MANAGER);
             let allowedBalance = await pool.getStakeholderBalanceOf(RL_ICO_MANAGER);
-            let icoManagerPersentageShare = await pool.stakeholderShare(2);
-            let icoManagerETHShare = totalSendETH.mul(icoManagerPersentageShare).divToInt(1e18);
-            assert(allowedBalance.eq(icoManagerETHShare));
             let instance = await pool.releaseEtherToStakeholder(ICO_MANAGER_RELEASE_ETH, {from: ICO_MANAGER,gasPrice: gasPrice});
             let gasCost = gasPrice.mul(instance.receipt.gasUsed);
-            let balAfter = await web3.eth.getBalance(ICO_MANAGER);
-            assert(balAfter.eq((balBefore.plus(ICO_MANAGER_RELEASE_ETH)).minus(gasCost)));
             await token.approve(pool.address, TOKEN_SUPPLY, {from: ICO_MANAGER});
-            let allowedTokens = await token.allowance(ICO_MANAGER, pool.address);
-            assert(allowedTokens.eq(TOKEN_SUPPLY));
-            await pool.acceptTokenFromICO(allowedTokens, {from: ICO_MANAGER});
-            let contractBalance = await token.balanceOf(pool.address);
-            assert(TOKEN_SUPPLY.eq(contractBalance));
+            await pool.acceptTokenFromICO(TOKEN_SUPPLY, {from: ICO_MANAGER});
             await pool.setState(ST_TOKEN_DISTRIBUTION, {from: ADMIN});
-            assert(ST_TOKEN_DISTRIBUTION.eq(await pool.getState()));
-
             for (let i in investors) {
-                // Ниже неправильный BigNumber: BigNumber { s: 1, e: 16, c: [ 999, 99999999999998 ] }
-                // Если делать транзакцию - воспринимает только такой формат
                 let poolingETHBalance = await pool.getBalanceEtherOf(investors[i]);
                 let poolingTokenBalance = await pool.getBalanceTokenOf(investors[i]);
-                assert(poolingTokenBalance.eq(INVESTOR_SUM_PAY.mul(allowedTokens).div(totalSendETH)));
+                assert(poolingTokenBalance.eq(INVESTOR_SUM_PAY.mul(TOKEN_SUPPLY).div(totalSentETH)));
                 let investorBalanceBefore = await web3.eth.getBalance(investors[i]);
-                console.log(poolingETHBalance)
-                console.log((totalSendETH.minus(ICO_MANAGER_RELEASE_ETH)).mul(INVESTOR_SUM_PAY).div(totalSendETH))
-                // assert(poolingETHBalance.eq((totalSendETH.minus(ICO_MANAGER_RELEASE_ETH)).div(totalSendETH).mul(INVESTOR_SUM_PAY)));
                 let tx = await pool.sendTransaction({from: investors[i],value: tbn(1e7),gasPrice: gasPrice});
                 let gasCost = gasPrice.mul(tx.receipt.gasUsed);
                 let investorBalanceAfter = await web3.eth.getBalance(investors[i]);
@@ -213,19 +223,6 @@ contract('Pool Common test', function (accounts) {
                 let erc20TokenBalance = await token.balanceOf(investors[i]);
                 assert(poolingTokenBalance.eq(erc20TokenBalance));
             }
-        });
-
-        it('should allow to release amount of ETH to stakeholder by admin', async function () {
-            await pool.setState(ST_RAISING, {from: POOL_MANAGER});
-            for (let i in investors)
-                await pool.sendTransaction({value: INVESTOR_SUM_PAY,from: investors[i]});
-            await pool.setState(ST_WAIT_FOR_ICO, {from: ICO_MANAGER});
-            let totalSendETH = await pool.totalShare();
-            let balBefore = await web3.eth.getBalance(ICO_MANAGER);
-            let instance = await pool.releaseEtherToStakeholderForce(RL_ICO_MANAGER, ICO_MANAGER_RELEASE_ETH, {from: ADMIN, gasPrice: gasPrice});
-            let gasCost = gasPrice.mul(instance.receipt.gasUsed);
-            let balAfter = await web3.eth.getBalance(ICO_MANAGER);
-            assert(balAfter.eq((balBefore.plus(ICO_MANAGER_RELEASE_ETH))));
         });
     });
 });
