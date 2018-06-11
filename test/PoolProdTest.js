@@ -60,7 +60,7 @@ contract('Pool Common test', (accounts) => {
         account6: accounts[6],
         account7: accounts[7],
         account8: accounts[8]
-    }
+    };
 
     let pool;
     let token;
@@ -456,5 +456,90 @@ contract('Pool Common test', (accounts) => {
             // Check that current state == ST_MONEY_BACK
             assert(state.eq(ST_MONEY_BACK));
         });
+    });
+
+    describe('Complex integration Tests', () => {
+        it('RAISING => SEND 3 ETH => Return 10% to stakeholders => send 3 ** 18 tokens to investors => DEPRICATED', async () => {
+            // set RAISING state by Pool manager account
+            await pool.setState(ST_RAISING, {from: POOL_MANAGER});
+            // Getting current state
+            let state = await pool.getState();
+            // Check that current state == ST_RAISING
+            assert(state.eq(ST_RAISING));
+            // INVEST SUM to one investor will be 0.6 ETH
+            const INVEST_SUM = tw(0.6);
+            // all investors send sum to pooling contract during raising
+            for (let i in investors)
+                await pool.sendTransaction({value: INVEST_SUM, from: investors[i]});
+            // getting balance of pooling contract after invest
+            let accountBalance = web3.eth.getBalance(pool.address);
+            // check that pooling contract have all ETH from investors
+            assert(accountBalance.eq(INVEST_SUM.mul(5)));
+            // check that totalShare variable is working fine (showing all collected ETH)
+            assert(accountBalance.eq(await pool.totalShare()));
+            // set WAIT_FOR_ICO state by ICO manager account
+            await pool.setState(ST_WAIT_FOR_ICO, {from: ICO_MANAGER});
+            // Getting current state
+            let stateTwo = await pool.getState();
+            // Check that current state == ST_WAIT_FOR_ICO
+            assert(stateTwo.eq(ST_WAIT_FOR_ICO));
+
+            // total amount of collected tokens
+            let totalSentETH = await pool.totalShare();
+
+            // (Percent share of ICO manager from total sent ETH) multiplyed by DECIMAL_MULTIPLIER (1e18)
+            let icoManagerPersentageShare = await pool.stakeholderShare(RL_ICO_MANAGER);
+
+            // Calculate icoManagerETHShare
+            let icoManagerETHShare = totalSentETH.mul(icoManagerPersentageShare).divToInt(1e18);
+
+            // get all ETH by ICO manager
+            let sumToICOManager = await pool.getStakeholderBalanceOf(RL_ICO_MANAGER);
+
+            assert(sumToICOManager.eq(icoManagerETHShare), "share error");
+
+            let managerBalanceBefore = await web3.eth.getBalance(ICO_MANAGER);
+
+            // get all ETH by ICO manager to it's account
+            let instance = await pool.releaseEtherToStakeholder(sumToICOManager, {from: ICO_MANAGER, gasPrice: gasPrice});
+
+            let feeForManager = (instance.receipt.gasUsed)*(gasPrice);
+
+            let managerBalanceAfter = await web3.eth.getBalance(ICO_MANAGER);
+
+            let accountBalanceAfter =  await web3.eth.getBalance(pool.address);
+
+            assert((managerBalanceBefore).eq(((managerBalanceAfter.plus(feeForManager)).minus(icoManagerETHShare))), "balance ICO mng error");
+
+            assert(accountBalance.eq(accountBalanceAfter.plus(icoManagerETHShare)));
+
+            assert(accountBalance.eq(accountBalanceAfter.plus(sumToICOManager)));
+
+            await token.approve(pool.address, tw(3), {from: ICO_MANAGER});
+
+            assert((await token.allowance(ICO_MANAGER, pool.address)).eq(tw(3)));
+
+            await pool.acceptTokenFromICO(tw(3), {from: ICO_MANAGER});
+
+            await pool.setState(ST_TOKEN_DISTRIBUTION, {from: ICO_MANAGER});
+            // Getting current state
+            let stateThree = await pool.getState();
+            // Check that current state == ST_TOKEN_DISTRIBUTION
+            assert(stateThree.eq(ST_TOKEN_DISTRIBUTION));
+
+            for (let i in investors) {
+                let b = await pool.getBalanceTokenOf(investors[i]);
+                await pool.releaseToken(b, {from: investors[i]});
+            }
+
+            for (let i in investors) {
+                let poolingTokenBalance = await token.balanceOf(investors[i]);
+                assert(poolingTokenBalance.eq((tw(0.6)).mul(tw(3)).div(totalSentETH)));
+            }
+
+
+
+
+        })
     });
 });
