@@ -379,7 +379,7 @@ contract('Pool Common test', (accounts) => {
                 assert(balanceAfter.eq(balanceBefore.plus(sendValue).minus(gasCost)));
             }    
         });
-        it('should allow to make money back via refundShareForce func', async () => {
+        it('should allow to make money back via refundShareForce function', async () => {
             let sendValue = tw(0.06);
             await pool.setState(ST_RAISING, {from: POOL_MANAGER});
             for (let i in investors)
@@ -402,37 +402,58 @@ contract('Pool Common test', (accounts) => {
     });
     describe('State Tests', () => {
         it('should check default state', async () => {
+            // Getting current state
             let state = await pool.getState();
+            // Check that current state == ST_DEFAULT
             assert(state.eq(ST_DEFAULT));
         });
         it('should set raising state', async () => {
+            // set RAISING state by Pool manager account
             await pool.setState(ST_RAISING, {from: POOL_MANAGER});
+            // Getting current state
             let state = await pool.getState();
+            // Check that current state == ST_RAISING
             assert(state.eq(ST_RAISING));
         });
         it('should set wait for ICO state', async () => {
+            // set RAISING state by Pool manager account
             await pool.setState(ST_RAISING, {from: POOL_MANAGER});
+            // all investors send sum to pooling contract during raising
             for (let i in investors)
                 await pool.sendTransaction({value: INVESTOR_SUM_PAY, from: investors[i]});
+            // set WAIT_FOR_ICO state by ICO manager account
             await pool.setState(ST_WAIT_FOR_ICO, {from: ICO_MANAGER});
+            // Getting current state
             let state = await pool.getState();
+            // Check that current state == ST_WAIT_FOR_ICO
             assert(state.eq(ST_WAIT_FOR_ICO));
         });
         it('should set token distribution state', async () => {
+            // set RAISING state by Pool manager account
             await pool.setState(ST_RAISING, {from: POOL_MANAGER});
+            // all investors send sum to pooling contract during raising
             for (let i in investors)
                 await pool.sendTransaction({value: INVESTOR_SUM_PAY, from: investors[i]});
+            // set WAIT_FOR_ICO state by ICO manager account
             await pool.setState(ST_WAIT_FOR_ICO, {from: ICO_MANAGER});
+            // set ST_TOKEN_DISTRIBUTION state by ICO manager account
             await pool.setState(ST_TOKEN_DISTRIBUTION, {from: ICO_MANAGER});
+            // Getting current state
             let state = await pool.getState();
+            // Check that current state == ST_TOKEN_DISTRIBUTION
             assert(state.eq(ST_TOKEN_DISTRIBUTION));
         });
         it('should set money back state', async () => {
+            // set RAISING state by Pool manager account
             await pool.setState(ST_RAISING, {from: POOL_MANAGER});
+            // all investors send sum to pooling contract during raising
             for (let i in investors)
                 await pool.sendTransaction({value: tw(0.06), from: investors[i]});
+            // set ST_MONEY_BACK state by admin account
             await pool.setState(ST_MONEY_BACK, {from: ADMIN});
+            // Getting current state
             let state = await pool.getState();
+            // Check that current state == ST_MONEY_BACK
             assert(state.eq(ST_MONEY_BACK));
         });
     });
