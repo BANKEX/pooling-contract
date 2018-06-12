@@ -480,12 +480,6 @@ contract('ShareStore COMMON TEST', (accounts) => {
         assert(adminTokenBalanceAfterDepricated.eq(adminTokenBalance.plus(tokenContractBalance)));
     });
 
-    it("should allow to take stakeholders parts after wait for ico", async function () {
-        // not ready
-        assert.equal(1, 2, "Problem with parts need to make functions for it!")
-    });
-
-
     it("should allow to release ether and tokens by force from admin", async function () {
         const gasPrice = tw("3e-7");
         let tokenLocal = await Token.new(TOKEN_SUPPLY);

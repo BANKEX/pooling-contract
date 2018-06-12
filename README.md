@@ -1,6 +1,6 @@
 # Documentation
 
-https://bankex.github.io/pooling-contract/
+https://bankex.github.io/pooling-contract
 
 # Deployment
 #### 1. Create .env file with next content:
