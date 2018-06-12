@@ -529,6 +529,7 @@ contract('Pool Common test', (accounts) => {
 
             for (let i in investors) {
                 let b = await pool.getBalanceTokenOf(investors[i]);
+                assert(b.eq((tw(0.6)).mul(tw(3)).div(totalSentETH)));
                 await pool.releaseToken(b, {from: investors[i]});
             }
 
@@ -537,8 +538,39 @@ contract('Pool Common test', (accounts) => {
                 assert(poolingTokenBalance.eq((tw(0.6)).mul(tw(3)).div(totalSentETH)));
             }
 
+            let poolManagerShare = await pool.stakeholderShare(RL_POOL_MANAGER);
 
+            let adminShare =  await pool.stakeholderShare(RL_ADMIN);
 
+            let poolManagerPart = totalSentETH.mul(poolManagerShare).divToInt(1e18);
+
+            let adminPart = totalSentETH.mul(adminShare).divToInt(1e18);
+
+            let poolShareFromContract = await pool.getStakeholderBalanceOf(RL_POOL_MANAGER);
+
+            let adminShareFromContract = await pool.getStakeholderBalanceOf(RL_ADMIN);
+
+            assert(poolShareFromContract.eq(poolManagerPart), "pool share error");
+            assert(adminShareFromContract.eq(adminPart), "admin share error");
+
+            let balancePoolMngBefore = await web3.eth.getBalance(POOL_MANAGER);
+
+            let balanceAdminBefore = await web3.eth.getBalance(ADMIN);
+
+            let instancePool = await pool.releaseEtherToStakeholder(poolShareFromContract, {from: POOL_MANAGER, gasPrice: gasPrice});
+
+            let instanceAdmin = await pool.releaseEtherToStakeholder(adminPart, {from: ADMIN, gasPrice: gasPrice});
+
+            let feePool = gasPrice * instancePool.receipt.gasUsed;
+
+            let feeAdmin = gasPrice * instanceAdmin.receipt.gasUsed;
+
+            let balancePoolMngNow = await web3.eth.getBalance(POOL_MANAGER);
+
+            let balanceAdminNow = await web3.eth.getBalance(ADMIN);
+
+            assert((balancePoolMngNow.minus(poolManagerPart)).eq((balancePoolMngBefore.minus(feePool))));
+            assert((balanceAdminNow.minus(adminPart)).eq((balanceAdminBefore.minus(feeAdmin))), "admin error");
 
         })
     });
