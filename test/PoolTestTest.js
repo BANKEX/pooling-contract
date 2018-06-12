@@ -1,4 +1,4 @@
-const Pool = artifacts.require("./PoolProd.sol");
+const Pool = artifacts.require("./PoolTest.sol");
 const Token = artifacts.require("./TestToken.sol");
 
 const web3 = global.web3;
