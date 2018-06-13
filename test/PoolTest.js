@@ -1,7 +1,139 @@
-const Pool = artifacts.require("./PoolProd.sol");
+const Pool = artifacts.require("./PoolTest.sol");
 const Token = artifacts.require("./TestToken.sol");
 
 const web3 = global.web3;
+
+const IERC20_ABI = [
+    {
+        "constant": false,
+        "inputs": [
+            {
+                "name": "spender",
+                "type": "address"
+            },
+            {
+                "name": "value",
+                "type": "uint256"
+            }
+        ],
+        "name": "approve",
+        "outputs": [
+            {
+                "name": "",
+                "type": "bool"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "constant": true,
+        "inputs": [],
+        "name": "totalSupply",
+        "outputs": [
+            {
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "constant": false,
+        "inputs": [
+            {
+                "name": "from",
+                "type": "address"
+            },
+            {
+                "name": "to",
+                "type": "address"
+            },
+            {
+                "name": "value",
+                "type": "uint256"
+            }
+        ],
+        "name": "transferFrom",
+        "outputs": [
+            {
+                "name": "",
+                "type": "bool"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "constant": true,
+        "inputs": [
+            {
+                "name": "who",
+                "type": "address"
+            }
+        ],
+        "name": "balanceOf",
+        "outputs": [
+            {
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "constant": false,
+        "inputs": [
+            {
+                "name": "to",
+                "type": "address"
+            },
+            {
+                "name": "value",
+                "type": "uint256"
+            }
+        ],
+        "name": "transfer",
+        "outputs": [
+            {
+                "name": "",
+                "type": "bool"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "constant": true,
+        "inputs": [
+            {
+                "name": "owner",
+                "type": "address"
+            },
+            {
+                "name": "spender",
+                "type": "address"
+            }
+        ],
+        "name": "allowance",
+        "outputs": [
+            {
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+    }
+];
 
 const tbn = v => web3.toBigNumber(v);
 const fbn = v => v.toString();
@@ -483,95 +615,113 @@ contract('Pool Common test', (accounts) => {
             let stateTwo = await pool.getState();
             // Check that current state == ST_WAIT_FOR_ICO
             assert(stateTwo.eq(ST_WAIT_FOR_ICO));
-
             // total amount of collected tokens
             let totalSentETH = await pool.totalShare();
-
             // (Percent share of ICO manager from total sent ETH) multiplyed by DECIMAL_MULTIPLIER (1e18)
             let icoManagerPersentageShare = await pool.stakeholderShare(RL_ICO_MANAGER);
-
             // Calculate icoManagerETHShare
             let icoManagerETHShare = totalSentETH.mul(icoManagerPersentageShare).divToInt(1e18);
-
             // get all ETH by ICO manager
             let sumToICOManager = await pool.getStakeholderBalanceOf(RL_ICO_MANAGER);
-
+            // check that share for ICO manager is calculated properly
             assert(sumToICOManager.eq(icoManagerETHShare), "share error");
-
+            // get balance of ICO manager before release
             let managerBalanceBefore = await web3.eth.getBalance(ICO_MANAGER);
-
             // get all ETH by ICO manager to it's account
             let instance = await pool.releaseEtherToStakeholder(sumToICOManager, {from: ICO_MANAGER, gasPrice: gasPrice});
-
+            // calculate fee in ETH that ICO manager spent while using releaseEtherToStakeholder function
             let feeForManager = (instance.receipt.gasUsed)*(gasPrice);
-
+            // Balance of ICO manager after realeasing
             let managerBalanceAfter = await web3.eth.getBalance(ICO_MANAGER);
-
+            // Balance of Contract after realeasing
             let accountBalanceAfter =  await web3.eth.getBalance(pool.address);
-
+            // check that ico manager get his share part in ETH properly
             assert((managerBalanceBefore).eq(((managerBalanceAfter.plus(feeForManager)).minus(icoManagerETHShare))), "balance ICO mng error");
-
+            // check that pooling balance now is less than before by icoManagerETHShare value
             assert(accountBalance.eq(accountBalanceAfter.plus(icoManagerETHShare)));
-
+            // check that pooling balance now is less than before by sumToICOManager value == icoManagerETHShare
             assert(accountBalance.eq(accountBalanceAfter.plus(sumToICOManager)));
-
+            // apporove pooling address from ICO manager (give tokens to pooling)
             await token.approve(pool.address, tw(3), {from: ICO_MANAGER});
-
+            // check that approval is right
             assert((await token.allowance(ICO_MANAGER, pool.address)).eq(tw(3)));
-
+            // accept tokens form ico
             await pool.acceptTokenFromICO(tw(3), {from: ICO_MANAGER});
-
+            // set token distribution state
             await pool.setState(ST_TOKEN_DISTRIBUTION, {from: ICO_MANAGER});
             // Getting current state
             let stateThree = await pool.getState();
             // Check that current state == ST_TOKEN_DISTRIBUTION
             assert(stateThree.eq(ST_TOKEN_DISTRIBUTION));
-
+            // check that tokens for investors are calculated right and release it
             for (let i in investors) {
+                // balance of tokens from contract
                 let b = await pool.getBalanceTokenOf(investors[i]);
+                // check calculation from JS to check that contract logic is right
                 assert(b.eq((tw(0.6)).mul(tw(3)).div(totalSentETH)));
+                // release tokens for investors
                 await pool.releaseToken(b, {from: investors[i]});
             }
-
+            // check that balance of investors in tokens is that was promised by pooling
             for (let i in investors) {
+                // balance of investor in tokens
                 let poolingTokenBalance = await token.balanceOf(investors[i]);
+                // check that
                 assert(poolingTokenBalance.eq((tw(0.6)).mul(tw(3)).div(totalSentETH)));
             }
-
+            // get % part sum in ETH of pool manager
             let poolManagerShare = await pool.stakeholderShare(RL_POOL_MANAGER);
-
+            // get % part sum in ETH of ADMIN
             let adminShare =  await pool.stakeholderShare(RL_ADMIN);
-
+            // get ETH part if pool manager
             let poolManagerPart = totalSentETH.mul(poolManagerShare).divToInt(1e18);
-
+            // get ETH part if admin
             let adminPart = totalSentETH.mul(adminShare).divToInt(1e18);
-
+            // get ETH part if pool mng from contract
             let poolShareFromContract = await pool.getStakeholderBalanceOf(RL_POOL_MANAGER);
-
+            // get ETH part if admin from contract
             let adminShareFromContract = await pool.getStakeholderBalanceOf(RL_ADMIN);
-
+            // check that part for pool manager is calculated right
             assert(poolShareFromContract.eq(poolManagerPart), "pool share error");
+            // check that part for admin is calculated right
             assert(adminShareFromContract.eq(adminPart), "admin share error");
-
+            // get Balance of POOl manager before in ETH
             let balancePoolMngBefore = await web3.eth.getBalance(POOL_MANAGER);
-
+            // get Balance of ADMIN before in ETH
             let balanceAdminBefore = await web3.eth.getBalance(ADMIN);
-
+            // release ETH to Pool manager
             let instancePool = await pool.releaseEtherToStakeholder(poolShareFromContract, {from: POOL_MANAGER, gasPrice: gasPrice});
-
+            // release ETH to admin
             let instanceAdmin = await pool.releaseEtherToStakeholder(adminPart, {from: ADMIN, gasPrice: gasPrice});
-
+            // fee of pool manager tx
             let feePool = gasPrice * instancePool.receipt.gasUsed;
-
+            // fee of admin tx
             let feeAdmin = gasPrice * instanceAdmin.receipt.gasUsed;
-
+            // new balance of pool manager in ETH
             let balancePoolMngNow = await web3.eth.getBalance(POOL_MANAGER);
-
+            // new balance of pool manager in ETH
             let balanceAdminNow = await web3.eth.getBalance(ADMIN);
-
+            // check that stake holders release correct sum of ETH
             assert((balancePoolMngNow.minus(poolManagerPart)).eq((balancePoolMngBefore.minus(feePool))));
             assert((balanceAdminNow.minus(adminPart)).eq((balanceAdminBefore.minus(feeAdmin))), "admin error");
-
+            // add DISTRIBUTION_PERIOD to time state
+            await pool.incTimestamp(DISTRIBUTION_PERIOD);
+            // get current state
+            let stateFour = await pool.getState();
+            // check that current state == ST_FUND_DEPRECATED
+            assert(stateFour.eq(ST_FUND_DEPRECATED));
+            // balance of ADMIN in tokens before
+            let balanceBeforeAdmin = await token.balanceOf(ADMIN);
+            // balance of pooling contract in tokens
+            let tokenContractBalance = await token.balanceOf(pool.address);
+            // data transaction
+            let data = String((web3.eth.contract(IERC20_ABI).at(token).transfer.getData(ADMIN, tokenContractBalance)));
+            // transfer tokens to admin from pooling contract by admin
+            await pool.execute(token.address, 0, data, {from: ADMIN, gasPrice: gasPrice});
+            // balance after of admin in tokens
+            let balanceAfterAdmin = await token.balanceOf(ADMIN);
+            // check that admin return this amount of tokens correctly
+            assert(balanceBeforeAdmin.eq(balanceAfterAdmin.minus(tokenContractBalance)));
         })
     });
 });
