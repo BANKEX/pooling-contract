@@ -772,13 +772,13 @@ contract('Pool Common test', (accounts) => {
             await pool.setState(ST_MONEY_BACK, {from: ADMIN});
             // check that state is MONEY_BACK
             assert((await pool.getState()).eq(ST_MONEY_BACK));
-
+            // array of ETH that investor get from contract
             let delta = [];
             delta.push(0);
             delta.push(0);
             delta.push(0);
             delta.push(0);
-
+            // update this array
             for(let i = 4; i < 10; i++) {
                 let bal = await pool.getBalanceEtherOf(accounts[i]);
                 delta.push(bal);
@@ -789,19 +789,18 @@ contract('Pool Common test', (accounts) => {
             balancesBefore.push(0);
             balancesBefore.push(0);
             balancesBefore.push(0);
-
+            // fee in WEI that investors spent on refundShare
             let fees = [];
             fees.push(0);
             fees.push(0);
             fees.push(0);
             fees.push(0);
-
+            // balance of investors in ETH before refundShare
             for(let i = 4; i < 10; i++) {
                 // get balance of investor
                 let bal = await web3.eth.getBalance(accounts[i]);
                 balancesBefore.push(bal)
             }
-
             // return money back by refundShare function
             for(let i = 4; i < 10; i++) {
                 // get balance of investor
@@ -810,24 +809,22 @@ contract('Pool Common test', (accounts) => {
                 let instance = await pool.refundShare(bal, {from: accounts[i], gasPrice: gasPrice});
                 fees.push(gasPrice * instance.receipt.gasUsed);
             }
-
             // array of investors balances after refund
             let balancesAfter = [];
             balancesAfter.push(0);
             balancesAfter.push(0);
             balancesAfter.push(0);
             balancesAfter.push(0);
-
+            // balance of investors in ETH after refundShare
             for(let i = 4; i < 10; i++) {
                 // get balance of investor
                 let bal = await web3.eth.getBalance(accounts[i]);
                 balancesAfter.push(bal);
             }
-
+            // check that balance before + fees == balanceAfter + delta
             for(let i = 4; i < 10; i++) {
                 assert(((balancesBefore[i]).plus(delta[i])).eq(((balancesAfter[i]).plus(fees[i]))));
             }
-
         });
     });
 });
