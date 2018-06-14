@@ -748,5 +748,86 @@ contract('Pool Common test', (accounts) => {
             // check that admin return this amount of tokens correctly
             assert(balanceBeforeAdmin.eq(balanceAfterAdmin.minus(tokenContractBalance)));
         });
+
+        it('RAISING => MONEY BACK', async () => {
+            // set RAISING state by Pool manager account
+            await pool.setState(ST_RAISING, {from: POOL_MANAGER});
+            // Getting current state
+            let state = await pool.getState();
+            // Check that current state == ST_RAISING
+            assert(state.eq(ST_RAISING));
+            // INVEST SUM to one investor will be 0.6 ETH
+            const INVEST_SUM = tw(0.6);
+            // all investors send sum to pooling contract during raising
+            for (let i = 4; i < 10; i++) {
+                await pool.sendTransaction({value: INVEST_SUM, from: accounts[i]});
+            }
+            // getting balance of pooling contract after invest
+            let accountBalance = web3.eth.getBalance(pool.address);
+            // check that pooling contract have all ETH from investors
+            assert(accountBalance.eq(INVEST_SUM.mul(6)));
+            // check that totalShare variable is working fine (showing all collected ETH)
+            assert(accountBalance.eq(await pool.totalShare()));
+            // set state money back
+            await pool.setState(ST_MONEY_BACK, {from: ADMIN});
+            // check that state is MONEY_BACK
+            assert((await pool.getState()).eq(ST_MONEY_BACK));
+
+            let delta = [];
+            delta.push(0);
+            delta.push(0);
+            delta.push(0);
+            delta.push(0);
+
+            for(let i = 4; i < 10; i++) {
+                let bal = await pool.getBalanceEtherOf(accounts[i]);
+                delta.push(bal);
+            }
+            // array of investors balances before refund
+            let balancesBefore = [];
+            balancesBefore.push(0);
+            balancesBefore.push(0);
+            balancesBefore.push(0);
+            balancesBefore.push(0);
+
+            let fees = [];
+            fees.push(0);
+            fees.push(0);
+            fees.push(0);
+            fees.push(0);
+
+            for(let i = 4; i < 10; i++) {
+                // get balance of investor
+                let bal = await web3.eth.getBalance(accounts[i]);
+                balancesBefore.push(bal)
+            }
+
+            // return money back by refundShare function
+            for(let i = 4; i < 10; i++) {
+                // get balance of investor
+                let bal = await pool.getBalanceEtherOf(accounts[i]);
+                // refund ETH to investor
+                let instance = await pool.refundShare(bal, {from: accounts[i], gasPrice: gasPrice});
+                fees.push(gasPrice * instance.receipt.gasUsed);
+            }
+
+            // array of investors balances after refund
+            let balancesAfter = [];
+            balancesAfter.push(0);
+            balancesAfter.push(0);
+            balancesAfter.push(0);
+            balancesAfter.push(0);
+
+            for(let i = 4; i < 10; i++) {
+                // get balance of investor
+                let bal = await web3.eth.getBalance(accounts[i]);
+                balancesAfter.push(bal);
+            }
+
+            for(let i = 4; i < 10; i++) {
+                assert(((balancesBefore[i]).plus(delta[i])).eq(((balancesAfter[i]).plus(fees[i]))));
+            }
+
+        });
     });
 });
