@@ -722,6 +722,6 @@ contract('Pool Common test', (accounts) => {
             let balanceAfterAdmin = await token.balanceOf(ADMIN);
             // check that admin return this amount of tokens correctly
             assert(balanceBeforeAdmin.eq(balanceAfterAdmin.minus(tokenContractBalance)));
-        })
+        });
     });
 });

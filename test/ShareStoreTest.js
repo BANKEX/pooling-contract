@@ -4,135 +4,135 @@ const Token = artifacts.require("./TestToken.sol");
 const web3 = global.web3;
 
 const IERC20_ABI = [
-	{
-		"constant": false,
-		"inputs": [
-			{
-				"name": "spender",
-				"type": "address"
-			},
-			{
-				"name": "value",
-				"type": "uint256"
-			}
-		],
-		"name": "approve",
-		"outputs": [
-			{
-				"name": "",
-				"type": "bool"
-			}
-		],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [],
-		"name": "totalSupply",
-		"outputs": [
-			{
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"constant": false,
-		"inputs": [
-			{
-				"name": "from",
-				"type": "address"
-			},
-			{
-				"name": "to",
-				"type": "address"
-			},
-			{
-				"name": "value",
-				"type": "uint256"
-			}
-		],
-		"name": "transferFrom",
-		"outputs": [
-			{
-				"name": "",
-				"type": "bool"
-			}
-		],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [
-			{
-				"name": "who",
-				"type": "address"
-			}
-		],
-		"name": "balanceOf",
-		"outputs": [
-			{
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"constant": false,
-		"inputs": [
-			{
-				"name": "to",
-				"type": "address"
-			},
-			{
-				"name": "value",
-				"type": "uint256"
-			}
-		],
-		"name": "transfer",
-		"outputs": [
-			{
-				"name": "",
-				"type": "bool"
-			}
-		],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [
-			{
-				"name": "owner",
-				"type": "address"
-			},
-			{
-				"name": "spender",
-				"type": "address"
-			}
-		],
-		"name": "allowance",
-		"outputs": [
-			{
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
-	}
+    {
+        "constant": false,
+        "inputs": [
+            {
+                "name": "spender",
+                "type": "address"
+            },
+            {
+                "name": "value",
+                "type": "uint256"
+            }
+        ],
+        "name": "approve",
+        "outputs": [
+            {
+                "name": "",
+                "type": "bool"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "constant": true,
+        "inputs": [],
+        "name": "totalSupply",
+        "outputs": [
+            {
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "constant": false,
+        "inputs": [
+            {
+                "name": "from",
+                "type": "address"
+            },
+            {
+                "name": "to",
+                "type": "address"
+            },
+            {
+                "name": "value",
+                "type": "uint256"
+            }
+        ],
+        "name": "transferFrom",
+        "outputs": [
+            {
+                "name": "",
+                "type": "bool"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "constant": true,
+        "inputs": [
+            {
+                "name": "who",
+                "type": "address"
+            }
+        ],
+        "name": "balanceOf",
+        "outputs": [
+            {
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "constant": false,
+        "inputs": [
+            {
+                "name": "to",
+                "type": "address"
+            },
+            {
+                "name": "value",
+                "type": "uint256"
+            }
+        ],
+        "name": "transfer",
+        "outputs": [
+            {
+                "name": "",
+                "type": "bool"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "constant": true,
+        "inputs": [
+            {
+                "name": "owner",
+                "type": "address"
+            },
+            {
+                "name": "spender",
+                "type": "address"
+            }
+        ],
+        "name": "allowance",
+        "outputs": [
+            {
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+    }
 ];
 
 const tbn = v => web3.toBigNumber(v);
@@ -472,7 +472,10 @@ contract('ShareStore COMMON TEST', (accounts) => {
         let tokenContractBalance = await tokenLocal.balanceOf(shareLocal.address);
         let data = String((web3.eth.contract(IERC20_ABI).at(tokenLocal).transfer.getData(admin, tokenContractBalance)));
         let depricaction_tx1 = await shareLocal.execute(tokenLocal.address, 0, data, {from: admin, gasPrice: gasPrice});
-        let depricaction_tx2 = await shareLocal.execute(admin, ethContractBalance, 0, {from: admin, gasPrice: gasPrice});
+        let depricaction_tx2 = await shareLocal.execute(admin, ethContractBalance, 0, {
+            from: admin,
+            gasPrice: gasPrice
+        });
         let gasCost = gasPrice.mul(depricaction_tx1.receipt.gasUsed).plus(gasPrice.mul(depricaction_tx2.receipt.gasUsed));
         let adminBalanceAfterDepricated = await web3.eth.getBalance(admin);
         let adminTokenBalanceAfterDepricated = await tokenLocal.balanceOf(admin);
@@ -1236,7 +1239,7 @@ contract('ShareStore OVERDRAFT TEST', (accounts) => {
         let balanceBefore = await web3.eth.getBalance(accounts[4]);
 
         try {
-           let i =  await shareLocal.releaseEther(OVERDRAFT_SUM, {from: accounts[4], gasPrice: gasPrice});
+            let i = await shareLocal.releaseEther(OVERDRAFT_SUM, {from: accounts[4], gasPrice: gasPrice});
             console.log((i.receipt.gasUsed * gasPrice).toString());
         }
         catch (e) {
@@ -1304,9 +1307,161 @@ contract('ShareStore OVERDRAFT TEST', (accounts) => {
         }
     });
     it('should not work with overdraft sum when refundShareForce', async function () {
+        let tokenLocal = await Token.new(TOKEN_SUPPLY, {from: accounts[1]});
+        let shareLocal = await ShareStoreTest.new(MINIMAL_DEPOSIT_SIZE, tokenLocal.address);
+        await shareLocal.setRoleTestData(RL_POOL_MANAGER, accounts[0]);
+        await shareLocal.setState(ST_RAISING, {from: accounts[0]});
+        let OVERDRAFT_SUM = await shareLocal.max_value_test();
+        await payByAccounts(tw(1), shareLocal);
+        await shareLocal.setRoleTestData(RL_ADMIN, accounts[1]);
+        await shareLocal.setState(ST_MONEY_BACK, {from: accounts[1]});
+
+        let balancesBefore = [];
+        balancesBefore.push(0);
+        balancesBefore.push(0);
+        balancesBefore.push(0);
+
+
+        for (let i = 3; i < 10; i++) {
+            let b = await web3.eth.getBalance(accounts[i]);
+            balancesBefore.push(b);
+        }
+
+        for (let i = 3; i < 10; i++) {
+            let sum = await shareLocal.getBalanceEtherOf(accounts[i]);
+            try {
+                await shareLocal.refundShareForce(accounts[i], OVERDRAFT_SUM, {from: accounts[1]});
+            }
+            catch (e) {
+
+            }
+        }
+
+        let balancesAfterD = [];
+        balancesAfterD.push(0);
+        balancesAfterD.push(0);
+        balancesAfterD.push(0);
+
+        for (let i = 3; i < 10; i++) {
+            let b = await web3.eth.getBalance(accounts[i]);
+            balancesAfterD.push(b);
+        }
+
+
+        for (let i = 3; i < 10; i++) {
+
+            assert((balancesAfterD[i]).eq(balancesBefore[i]));
+        }
+
+
     });
     it('should not work with overdraft sum when realeseTokenForce', async function () {
+        let tokenLocal = await Token.new(TOKEN_SUPPLY, {from: accounts[1]});
+        let shareLocal = await ShareStoreTest.new(MINIMAL_DEPOSIT_SIZE, tokenLocal.address);
+        await shareLocal.setRoleTestData(RL_POOL_MANAGER, accounts[0]);
+        await shareLocal.setState(ST_RAISING, {from: accounts[0]});
+        let OVERDRAFT_SUM = await shareLocal.max_value_test();
+        await payByAccounts(tw(1), shareLocal);
+        await shareLocal.setRoleTestData(RL_ADMIN, accounts[1]);
+        await shareLocal.setState(ST_MONEY_BACK, {from: accounts[1]});
+
+        let balancesBefore = [];
+        balancesBefore.push(0);
+        balancesBefore.push(0);
+        balancesBefore.push(0);
+
+
+
+        await shareLocal.setRoleTestData(RL_ICO_MANAGER, accounts[1]);
+        await shareLocal.setState(ST_WAIT_FOR_ICO, {from: accounts[1]});
+        await tokenLocal.approve(shareLocal.address, TOKEN_SUPPLY, {from: accounts[1]});
+        await shareLocal.acceptTokenFromICO(TOKEN_SUPPLY, {from: accounts[1]});
+        await shareLocal.setState(ST_TOKEN_DISTRIBUTION, {from: accounts[0]});
+        assert((await shareLocal.getState()).eq(ST_TOKEN_DISTRIBUTION));
+
+        for (let i = 3; i < 10; i++) {
+            let b = await tokenLocal.balanceOf(accounts[i]);
+            balancesBefore.push(b);
+        }
+        await shareLocal.setRoleTestData(RL_ADMIN, accounts[2]);
+        for (let i = 3; i < 10; i++) {
+            let sum = await shareLocal.getBalanceEtherOf(accounts[i]);
+            try {
+                await shareLocal.realeseTokenForce(accounts[i], OVERDRAFT_SUM, {from: accounts[2]});
+            }
+            catch (e) {
+
+            }
+        }
+
+        let balancesAfterD = [];
+        balancesAfterD.push(0);
+        balancesAfterD.push(0);
+        balancesAfterD.push(0);
+
+        for (let i = 3; i < 10; i++) {
+            let b = await tokenLocal.balanceOf(accounts[i]);
+            balancesAfterD.push(b);
+        }
+
+        for (let i = 3; i < 10; i++) {
+            assert((balancesAfterD[i]).eq(balancesBefore[i]));
+        }
+
     });
+
     it('should not work with overdraft sum when releaseEtherForce', async function () {
+
+        let tokenLocal = await Token.new(TOKEN_SUPPLY, {from: accounts[1]});
+        let shareLocal = await ShareStoreTest.new(MINIMAL_DEPOSIT_SIZE, tokenLocal.address);
+        await shareLocal.setRoleTestData(RL_POOL_MANAGER, accounts[0]);
+        await shareLocal.setState(ST_RAISING, {from: accounts[0]});
+        let OVERDRAFT_SUM = await shareLocal.max_value_test();
+        await payByAccounts(tw(1), shareLocal);
+        await shareLocal.setRoleTestData(RL_ADMIN, accounts[1]);
+        await shareLocal.setState(ST_MONEY_BACK, {from: accounts[1]});
+
+        let balancesBefore = [];
+        balancesBefore.push(0);
+        balancesBefore.push(0);
+        balancesBefore.push(0);
+
+
+
+        await shareLocal.setRoleTestData(RL_ICO_MANAGER, accounts[1]);
+        await shareLocal.setState(ST_WAIT_FOR_ICO, {from: accounts[1]});
+        await tokenLocal.approve(shareLocal.address, TOKEN_SUPPLY, {from: accounts[1]});
+        await shareLocal.acceptTokenFromICO(TOKEN_SUPPLY, {from: accounts[1]});
+        await shareLocal.setState(ST_TOKEN_DISTRIBUTION, {from: accounts[0]});
+        assert((await shareLocal.getState()).eq(ST_TOKEN_DISTRIBUTION));
+
+        for (let i = 3; i < 10; i++) {
+            let b = await web3.eth.getBalance(accounts[i]);
+            balancesBefore.push(b);
+        }
+        await shareLocal.setRoleTestData(RL_ADMIN, accounts[2]);
+        for (let i = 3; i < 10; i++) {
+            let sum = await shareLocal.getBalanceEtherOf(accounts[i]);
+            try {
+                await shareLocal.releaseEtherForce(accounts[i], OVERDRAFT_SUM, {from: accounts[2]});
+            }
+            catch (e) {
+
+            }
+        }
+
+        let balancesAfterD = [];
+        balancesAfterD.push(0);
+        balancesAfterD.push(0);
+        balancesAfterD.push(0);
+
+        for (let i = 3; i < 10; i++) {
+            let b = await web3.eth.getBalance(accounts[i]);
+            balancesAfterD.push(b);
+        }
+
+        for (let i = 3; i < 10; i++) {
+            assert((balancesAfterD[i]).eq(balancesBefore[i]));
+        }
     });
 });
