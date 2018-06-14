@@ -8,7 +8,7 @@ contract ShareStoreTest is ShareStore, TimeMachineT {
   uint8 internal role_;
   address internal roleAddress_;
   
-  uint256 public max_value_test = 2**256 -1;
+  uint256 public max_value_test = 2 ** 256 - 1;
 
 
   uint8 internal state_;
