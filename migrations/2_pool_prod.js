@@ -1,8 +1,4 @@
-
-
 var PoolProd = artifacts.require("./PoolProd.sol");
-
-
 
 const tbn = v => web3._extend.utils.toBigNumber(v);
 const fbn = v => v.toString();
@@ -13,9 +9,6 @@ const TOKEN_SUPPLY = tw(10);
 const MINIMAL_DEPOSIT_SIZE = tw(0.05)
 
 const TI_DAY = tbn(86400);
-
-
-
 
 module.exports = function(deployer, network, accounts) {
   const operator = accounts[0];
@@ -32,9 +25,6 @@ module.exports = function(deployer, network, accounts) {
   const PAYBOT_ADDRESS = accounts[9];
   const TOKEN_ADDRESS = '0x15d16cf1620f924d77B302f5CEf75Ee9816B672F';
 
-
-
-
   (async () => {
     console.log(JSON.stringify([RAISING_PERIOD, ICO_PERIOD, DISTRIBUTION_PERIOD, 
       MINIMAL_FUND_SIZE, MAXIMAL_FUND_SIZE, MINIMAL_DEPOSIT, 
@@ -48,6 +38,5 @@ module.exports = function(deployer, network, accounts) {
       POOL_MANAGER_ADDRESS, ICO_MANAGER_ADDRESS, PAYBOT_ADDRESS, TOKEN_ADDRESS,
       {from:operator});
     await PoolProd.deployed();
-
   })();
 };

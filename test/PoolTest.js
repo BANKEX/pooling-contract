@@ -1056,20 +1056,27 @@ contract('Pool Common test', (accounts) => {
             assert(stateD.eq(ST_TOKEN_DISTRIBUTION));
         });
         it("shouldn't allow to change state to Raising if not pool mng", async () => {
-            try {  await pool.setState(ST_RAISING, {from: accounts[0]}); }
+            try {
+                // try to set state to RAISING
+                await pool.setState(ST_RAISING, {from: accounts[0]});
+            }
             catch (e) {
 
             }
+            // check that  nothing changed
             assert((await pool.getState()).eq(ST_DEFAULT));
 
             for (let i = 2; i < 10; i++) {
-                try {  await pool.setState(ST_RAISING, {from: accounts[i]}); }
+                try {
+                    // try to set state to RAISING
+                    await pool.setState(ST_RAISING, {from: accounts[i]});
+                }
                 catch (e) {
 
                 }
+                // check that  nothing changed
                 assert((await pool.getState()).eq(ST_DEFAULT));
             }
-
             // set RAISING state by Pool manager account
             await pool.setState(ST_RAISING, {from: POOL_MANAGER});
             // Getting current state
