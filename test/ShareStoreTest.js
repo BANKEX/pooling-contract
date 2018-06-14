@@ -1464,4 +1464,140 @@ contract('ShareStore OVERDRAFT TEST', (accounts) => {
             assert((balancesAfterD[i]).eq(balancesBefore[i]));
         }
     });
+
+    it('should normally react to incorrect sum in releaseToken', async () => {
+        let tokenLocal = await Token.new(TOKEN_SUPPLY, {from: accounts[1]});
+        let shareLocal = await ShareStoreTest.new(MINIMAL_DEPOSIT_SIZE, tokenLocal.address);
+        await shareLocal.setRoleTestData(RL_POOL_MANAGER, accounts[0]);
+        await shareLocal.setState(ST_RAISING, {from: accounts[0]});
+        let OVERDRAFT_SUM = await shareLocal.max_value_test();
+        await payByAccounts(tw(1), shareLocal);
+        await shareLocal.setRoleTestData(RL_ICO_MANAGER, accounts[1]);
+        await shareLocal.setState(ST_WAIT_FOR_ICO, {from: accounts[1]});
+        await tokenLocal.approve(shareLocal.address, TOKEN_SUPPLY, {from: accounts[1]});
+        let allowedTokens = await tokenLocal.allowance(accounts[1], shareLocal.address);
+        await shareLocal.acceptTokenFromICO(allowedTokens, {from: accounts[1]});
+        await shareLocal.setState(ST_TOKEN_DISTRIBUTION, {from: accounts[1]});
+        assert(ST_TOKEN_DISTRIBUTION.eq(await shareLocal.getState()));
+        let incorrect = {
+            incorrect1: -1212,
+            incorrect2: "dwd-adwmo",
+            incorrect3: "-0x1n2u",
+            incorrect4: accounts[4],
+            incorrect5: tw(188888888)
+        };
+
+        for (let i in incorrect) {
+            try {
+                await shareLocal.releaseToken(incorrect[i], {from: accounts[5]});
+            }
+            catch (e) {
+
+            }
+        }
+        assert((await tokenLocal.balanceOf(accounts[5])).eq(tbn(0)));
+    });
+    it('should normally react to incorrect sum in releaseEtherForce', async () => {
+        let tokenLocal = await Token.new(TOKEN_SUPPLY, {from: accounts[1]});
+        let shareLocal = await ShareStoreTest.new(MINIMAL_DEPOSIT_SIZE, tokenLocal.address);
+        await shareLocal.setRoleTestData(RL_POOL_MANAGER, accounts[0]);
+        await shareLocal.setState(ST_RAISING, {from: accounts[0]});
+        let OVERDRAFT_SUM = await shareLocal.max_value_test();
+        await payByAccounts(tw(1), shareLocal);
+        await shareLocal.setRoleTestData(RL_ICO_MANAGER, accounts[1]);
+        await shareLocal.setState(ST_WAIT_FOR_ICO, {from: accounts[1]});
+        await tokenLocal.approve(shareLocal.address, TOKEN_SUPPLY, {from: accounts[1]});
+        let allowedTokens = await tokenLocal.allowance(accounts[1], shareLocal.address);
+        await shareLocal.acceptTokenFromICO(allowedTokens, {from: accounts[1]});
+        await shareLocal.setState(ST_TOKEN_DISTRIBUTION, {from: accounts[1]});
+        assert(ST_TOKEN_DISTRIBUTION.eq(await shareLocal.getState()));
+
+        let bb = await web3.eth.getBalance(accounts[5]);
+
+        let incorrect = {
+            incorrect1: -1212,
+            incorrect2: "dwd-adwmo",
+            incorrect3: "-0x1n2u",
+            incorrect4: accounts[4],
+            incorrect5: tw(188888888)
+        };
+
+        let fees = {};
+
+        await shareLocal.setRoleTestData(RL_ADMIN, accounts[2]);
+        for (let i in incorrect) {
+            try {
+               let i =  await shareLocal.releaseEtherForce(accounts[5], incorrect[i], {from: accounts[2], gasPrice: gasPrice});
+            }
+            catch (e) {
+
+            }
+        }
+        assert((await web3.eth.getBalance(accounts[5])).eq(bb));
+    });
+    it('should normally react to incorrect sum in refundShareForce', async () => {
+        let tokenLocal = await Token.new(TOKEN_SUPPLY, {from: accounts[1]});
+        let shareLocal = await ShareStoreTest.new(MINIMAL_DEPOSIT_SIZE, tokenLocal.address);
+        await shareLocal.setRoleTestData(RL_POOL_MANAGER, accounts[0]);
+        await shareLocal.setState(ST_RAISING, {from: accounts[0]});
+        let OVERDRAFT_SUM = await shareLocal.max_value_test();
+        await payByAccounts(tw(1), shareLocal);
+        await shareLocal.setRoleTestData(RL_ADMIN, accounts[1]);
+        await shareLocal.setState(ST_MONEY_BACK, {from: accounts[1]});
+        assert(ST_MONEY_BACK.eq(await shareLocal.getState()));
+
+        let bb = await web3.eth.getBalance(accounts[5]);
+
+        let incorrect = {
+            incorrect1: -1212,
+            incorrect2: "dwd-adwmo",
+            incorrect3: "-0x1n2u",
+            incorrect4: accounts[4],
+            incorrect5: tw(188888888)
+        };
+
+        for (let i in incorrect) {
+            try {
+                let i =  await shareLocal.refundShareForce(accounts[5], incorrect[i], {from: accounts[1], gasPrice: gasPrice});
+            }
+            catch (e) {
+
+            }
+        }
+        assert((await web3.eth.getBalance(accounts[5])).eq(bb));
+    });
+
+    it('should normally react to incorrect sum in releaseTokenForce', async () => {
+        let tokenLocal = await Token.new(TOKEN_SUPPLY, {from: accounts[1]});
+        let shareLocal = await ShareStoreTest.new(MINIMAL_DEPOSIT_SIZE, tokenLocal.address);
+        await shareLocal.setRoleTestData(RL_POOL_MANAGER, accounts[0]);
+        await shareLocal.setState(ST_RAISING, {from: accounts[0]});
+        let OVERDRAFT_SUM = await shareLocal.max_value_test();
+        await payByAccounts(tw(1), shareLocal);
+        await shareLocal.setRoleTestData(RL_ICO_MANAGER, accounts[1]);
+        await shareLocal.setState(ST_WAIT_FOR_ICO, {from: accounts[1]});
+        await tokenLocal.approve(shareLocal.address, TOKEN_SUPPLY, {from: accounts[1]});
+        let allowedTokens = await tokenLocal.allowance(accounts[1], shareLocal.address);
+        await shareLocal.acceptTokenFromICO(allowedTokens, {from: accounts[1]});
+        await shareLocal.setState(ST_TOKEN_DISTRIBUTION, {from: accounts[1]});
+        assert(ST_TOKEN_DISTRIBUTION.eq(await shareLocal.getState()));
+
+        let incorrect = {
+            incorrect1: -1212,
+            incorrect2: "dwd-adwmo",
+            incorrect3: "-0x1n2u",
+            incorrect4: accounts[4],
+            incorrect5: tw(188888888)
+        };
+
+        for (let i in incorrect) {
+            try {
+                let i =  await shareLocal.releaseTokenForce(accounts[5], incorrect[i], {from: accounts[1], gasPrice: gasPrice});
+            }
+            catch (e) {
+
+            }
+        }
+        assert((await tokenLocal.balanceOf(accounts[5])).eq(tbn(0)));
+    });
 });
