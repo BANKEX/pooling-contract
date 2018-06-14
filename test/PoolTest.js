@@ -531,6 +531,31 @@ contract('Pool Common test', (accounts) => {
                 assert(balanceAfter.eq(balanceBefore.plus(sendValue)));
             }    
         });
+        it('should allow to return ETH to admin after money back', async () => {
+            let sendValue = tw(0.06);
+            await pool.setState(ST_RAISING, {from: POOL_MANAGER});
+            for (let i in investors)
+                await pool.sendTransaction({value: sendValue, from: investors[i]});
+            // Set money back state in order to investors could send back their ETH because the minimum amount was not collected 
+            await pool.setState(ST_MONEY_BACK, {from: ADMIN});
+            // Investor calls payable func with any amount of ETH (this value will return to investor).
+            // After that he get his money back
+            let tx = await pool.refundShare(sendValue,{from: investors['account4'], gasPrice: gasPrice});
+            // add DISTRIBUTION_PERIOD to time state
+            await pool.incTimestamp(DISTRIBUTION_PERIOD);
+            // balance of ADMIN in ETH before
+            let balanceBeforeAdmin = await web3.eth.getBalance(ADMIN);
+            // balance of pooling contract in ETH
+            let poolContractBalance = await web3.eth.getBalance(pool.address);
+            // transfer ETH to admin from pooling contract by admin
+            let depricaction_tx = await pool.execute(ADMIN, poolContractBalance, 0, {from: ADMIN, gasPrice: gasPrice});
+            // tx cost
+            let gasCost = gasPrice.mul(depricaction_tx.receipt.gasUsed);
+            // balance after of admin in ETH
+            let balanceAfterAdmin = await web3.eth.getBalance(ADMIN);
+            // check that admin return this amount of ETH correctly
+            assert(balanceAfterAdmin.eq(balanceBeforeAdmin.plus(poolContractBalance).minus(gasCost)));
+        });
     });
     describe('State Tests', () => {
         it('should check default state', async () => {
