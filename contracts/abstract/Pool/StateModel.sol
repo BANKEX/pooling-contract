@@ -86,7 +86,7 @@ contract StateModel is IRoleModel, IShareStore, IStateModel, ITimeMachine {
         }
         return ST_RAISING;
       }
-      if (_raisingState == RST_NOT_COLLECTED) {
+      if (_raisingState == RST_NOT_COLLECTED && (_timeState == TST_WAIT_FOR_ICO || _timeState == TST_TOKEN_DISTRIBUTION)) {
         return ST_MONEY_BACK;
       }
       if (_timeState == TST_WAIT_FOR_ICO) {
