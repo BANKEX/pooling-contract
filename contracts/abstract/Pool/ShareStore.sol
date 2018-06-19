@@ -9,6 +9,7 @@ import "../../libs/token/ERC20/IERC20.sol";
 
 
 contract ShareStore is IRoleModel, IShareStore, IStateModel {
+  
   using SafeMath for uint;
   
   /**
@@ -40,104 +41,42 @@ contract ShareStore is IRoleModel, IShareStore, IStateModel {
   * @dev total amount of ETH which stake holder can get
   */
   mapping (uint8=>uint) public stakeholderShare;
-  
   mapping (address=>uint) internal etherReleased_;
   mapping (address=>uint) internal tokenReleased_;
   mapping (uint8=>uint) internal stakeholderEtherReleased_;
-
   uint constant DECIMAL_MULTIPLIER = 1e18;
   
-  function getTotalShare_() internal view returns(uint){
-    return totalShare;
-  }
-
-  function getEtherCollected_() internal view returns(uint){
-    return totalShare;
-  }
-
-  function buyShare_(uint8 _state) internal returns(bool) {
-    require(_state == ST_RAISING);
-    require(msg.value >= minimalDeposit);
-    uint _shareRemaining = getShareRemaining_();
-    uint _shareAccept = (msg.value <= _shareRemaining) ? msg.value : _shareRemaining;
-
-    share[msg.sender] = share[msg.sender].add(_shareAccept);
-    totalShare = totalShare.add(_shareAccept);
-    emit BuyShare(msg.sender, _shareAccept);
-    if (msg.value!=_shareAccept) {
-      msg.sender.transfer(msg.value.sub(_shareAccept));
+  /**
+  * @dev payable function which does:
+  * If current state = ST_RASING - allows to send ETH for future tokens
+  * If current state = ST_MONEY_BACK - will send back all ETH that msg.sender has on balance
+  * If current state = ST_TOKEN_DISTRIBUTION - will reurn all ETH and Tokens that msg.sender has on balance
+  * in case of ST_MONEY_BACK or ST_TOKEN_DISTRIBUTION all ETH sum will be sent back (sum to trigger this function)
+  */
+  function () public payable {
+    uint8 _state = getState_();
+    if (_state == ST_RAISING){
+      buyShare_(_state);
+      return;
     }
-    return true;
-  }
-
-  function acceptTokenFromICO_(uint _value) internal returns(bool) {
-    totalToken = totalToken.add(_value);
-    emit AcceptTokenFromICO(msg.sender, _value);
-    require(IERC20(tokenAddress).transferFrom(msg.sender, this, _value));
-    return true;
-  }
-
-  function getStakeholderBalanceOf_(uint8 _for) internal view returns (uint) {
-    if (_for == RL_ICO_MANAGER) {
-      return getEtherCollected_().mul(stakeholderShare[_for]).div(DECIMAL_MULTIPLIER).sub(stakeholderEtherReleased_[_for]);
+    
+    if (_state == ST_MONEY_BACK) {
+      refundShare_(msg.sender, share[msg.sender]);
+      if(msg.value > 0)
+        msg.sender.transfer(msg.value);
+      return;
     }
-
-    if ((_for == RL_POOL_MANAGER) || (_for == RL_ADMIN)) {
-      return stakeholderEtherReleased_[RL_ICO_MANAGER].mul(stakeholderShare[_for]).div(stakeholderShare[RL_ICO_MANAGER]);
+    
+    if (_state == ST_TOKEN_DISTRIBUTION) {
+      releaseEther_(msg.sender, getBalanceEtherOf_(msg.sender));
+      releaseToken_(msg.sender, getBalanceTokenOf_(msg.sender));
+      if(msg.value > 0)
+        msg.sender.transfer(msg.value);
+      return;
     }
-    return 0;
+    revert();
   }
-
-  function releaseEtherToStakeholder_(uint8 _state, uint8 _for, uint _value) internal returns (bool) {
-    require(_for != RL_DEFAULT);
-    require(_for != RL_PAYBOT);
-    require(!((_for == RL_ICO_MANAGER) && (_state != ST_WAIT_FOR_ICO)));
-    uint _balance = getStakeholderBalanceOf_(_for);
-    address _afor = getRoleAddress_(_for);
-    require(_balance >= _value);
-    stakeholderEtherReleased_[_for] = stakeholderEtherReleased_[_for].add(_value);
-    emit ReleaseEtherToStakeholder(_for, _afor, _value);
-    _afor.transfer(_value);
-    return true;
-  }
-
-  function getBalanceEtherOf_(address _for) internal view returns (uint) {
-    uint _stakeholderTotalEtherReserved = stakeholderEtherReleased_[RL_ICO_MANAGER].mul(DECIMAL_MULTIPLIER).div(stakeholderShare[RL_ICO_MANAGER]);
-    uint _restEther = getEtherCollected_().sub(_stakeholderTotalEtherReserved);
-    return _restEther.mul(share[_for]).div(totalShare).sub(etherReleased_[_for]);
-  }
-
-  function getBalanceTokenOf_(address _for) internal view returns (uint) {
-    return totalToken.mul(share[_for]).div(totalShare).sub(tokenReleased_[_for]);
-  }
-
-  function releaseEther_(address _for, uint _value) internal returns (bool) {
-    uint _balance = getBalanceEtherOf_(_for);
-    require(_balance >= _value);
-    etherReleased_[_for] = etherReleased_[_for].add(_value);
-    emit ReleaseEther(_for, _value);
-    _for.transfer(_value);
-    return true;
-  }
-
-  function releaseToken_( address _for, uint _value) internal returns (bool) {
-    uint _balance = getBalanceTokenOf_(_for);
-    require(_balance >= _value);
-    tokenReleased_[_for] = tokenReleased_[_for].add(_value);
-    emit ReleaseToken(_for, _value);
-    require(IERC20(tokenAddress).transfer(_for, _value));
-    return true;
-  }
-
-  function refundShare_(address _for, uint _value) internal returns(bool) {
-    uint _balance = share[_for];
-    require(_balance >= _value);
-    share[_for] = _balance.sub(_value);
-    totalShare = totalShare.sub(_value);
-    emit RefundShare(_for, _value);
-    _for.transfer(_value);
-    return true;
-  }
+  
   
   /**
   * @dev Allow to buy part of tokens if current state is RAISING
@@ -282,37 +221,6 @@ contract ShareStore is IRoleModel, IShareStore, IStateModel {
   }
   
   /**
-  * @dev payable function which does:
-  * If current state = ST_RASING - allows to send ETH for future tokens
-  * If current state = ST_MONEY_BACK - will send back all ETH that msg.sender has on balance
-  * If current state = ST_TOKEN_DISTRIBUTION - will reurn all ETH and Tokens that msg.sender has on balance
-  * in case of ST_MONEY_BACK or ST_TOKEN_DISTRIBUTION all ETH sum will be sent back (sum to trigger this function)
-  */
-  function () public payable {
-    uint8 _state = getState_();
-    if (_state == ST_RAISING){
-      buyShare_(_state);
-      return;
-    }
-
-    if (_state == ST_MONEY_BACK) {
-      refundShare_(msg.sender, share[msg.sender]);
-      if(msg.value > 0)
-        msg.sender.transfer(msg.value);
-      return;
-    }
-
-    if (_state == ST_TOKEN_DISTRIBUTION) {
-      releaseEther_(msg.sender, getBalanceEtherOf_(msg.sender));
-      releaseToken_(msg.sender, getBalanceTokenOf_(msg.sender));
-      if(msg.value > 0)
-        msg.sender.transfer(msg.value);
-      return;
-    }
-    revert();
-  }
-  
-  /**
   * @dev Allow to use functions of other contract from this contract
   * @param _to address of contract to call
   * @param _value amount of ETH in wei
@@ -324,6 +232,99 @@ contract ShareStore is IRoleModel, IShareStore, IStateModel {
     require (getState_()==ST_FUND_DEPRECATED);
     /* solium-disable-next-line */
     return _to.call.value(_value)(_data);
+  }
+  
+  function getTotalShare_() internal view returns(uint){
+    return totalShare;
+  }
+
+  function getEtherCollected_() internal view returns(uint){
+    return totalShare;
+  }
+
+  function buyShare_(uint8 _state) internal returns(bool) {
+    require(_state == ST_RAISING);
+    require(msg.value >= minimalDeposit);
+    uint _shareRemaining = getShareRemaining_();
+    uint _shareAccept = (msg.value <= _shareRemaining) ? msg.value : _shareRemaining;
+
+    share[msg.sender] = share[msg.sender].add(_shareAccept);
+    totalShare = totalShare.add(_shareAccept);
+    emit BuyShare(msg.sender, _shareAccept);
+    if (msg.value!=_shareAccept) {
+      msg.sender.transfer(msg.value.sub(_shareAccept));
+    }
+    return true;
+  }
+
+  function acceptTokenFromICO_(uint _value) internal returns(bool) {
+    totalToken = totalToken.add(_value);
+    emit AcceptTokenFromICO(msg.sender, _value);
+    require(IERC20(tokenAddress).transferFrom(msg.sender, this, _value));
+    return true;
+  }
+
+  function getStakeholderBalanceOf_(uint8 _for) internal view returns (uint) {
+    if (_for == RL_ICO_MANAGER) {
+      return getEtherCollected_().mul(stakeholderShare[_for]).div(DECIMAL_MULTIPLIER).sub(stakeholderEtherReleased_[_for]);
+    }
+
+    if ((_for == RL_POOL_MANAGER) || (_for == RL_ADMIN)) {
+      return stakeholderEtherReleased_[RL_ICO_MANAGER].mul(stakeholderShare[_for]).div(stakeholderShare[RL_ICO_MANAGER]);
+    }
+    return 0;
+  }
+
+  function releaseEtherToStakeholder_(uint8 _state, uint8 _for, uint _value) internal returns (bool) {
+    require(_for != RL_DEFAULT);
+    require(_for != RL_PAYBOT);
+    require(!((_for == RL_ICO_MANAGER) && (_state != ST_WAIT_FOR_ICO)));
+    uint _balance = getStakeholderBalanceOf_(_for);
+    address _afor = getRoleAddress_(_for);
+    require(_balance >= _value);
+    stakeholderEtherReleased_[_for] = stakeholderEtherReleased_[_for].add(_value);
+    emit ReleaseEtherToStakeholder(_for, _afor, _value);
+    _afor.transfer(_value);
+    return true;
+  }
+
+  function getBalanceEtherOf_(address _for) internal view returns (uint) {
+    uint _stakeholderTotalEtherReserved = stakeholderEtherReleased_[RL_ICO_MANAGER]
+    .mul(DECIMAL_MULTIPLIER).div(stakeholderShare[RL_ICO_MANAGER]);
+    uint _restEther = getEtherCollected_().sub(_stakeholderTotalEtherReserved);
+    return _restEther.mul(share[_for]).div(totalShare).sub(etherReleased_[_for]);
+  }
+
+  function getBalanceTokenOf_(address _for) internal view returns (uint) {
+    return totalToken.mul(share[_for]).div(totalShare).sub(tokenReleased_[_for]);
+  }
+
+  function releaseEther_(address _for, uint _value) internal returns (bool) {
+    uint _balance = getBalanceEtherOf_(_for);
+    require(_balance >= _value);
+    etherReleased_[_for] = etherReleased_[_for].add(_value);
+    emit ReleaseEther(_for, _value);
+    _for.transfer(_value);
+    return true;
+  }
+
+  function releaseToken_( address _for, uint _value) internal returns (bool) {
+    uint _balance = getBalanceTokenOf_(_for);
+    require(_balance >= _value);
+    tokenReleased_[_for] = tokenReleased_[_for].add(_value);
+    emit ReleaseToken(_for, _value);
+    require(IERC20(tokenAddress).transfer(_for, _value));
+    return true;
+  }
+
+  function refundShare_(address _for, uint _value) internal returns(bool) {
+    uint _balance = share[_for];
+    require(_balance >= _value);
+    share[_for] = _balance.sub(_value);
+    totalShare = totalShare.sub(_value);
+    emit RefundShare(_for, _value);
+    _for.transfer(_value);
+    return true;
   }
   
 }

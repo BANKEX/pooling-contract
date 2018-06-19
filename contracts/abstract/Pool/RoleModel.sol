@@ -10,9 +10,9 @@ contract RoleModel is IRoleModel{
   mapping (uint8 => address) internal roleAddress_;
   
   function setRole_(uint8 _for, address _afor) internal returns(bool) {
-    require((role_[_afor]==0)&&(roleAddress_[_for]==address(0)));
-    role_[_afor]=_for;
-    roleAddress_[_for]=_afor;
+    require((role_[_afor] == 0) && (roleAddress_[_for] == address(0)));
+    role_[_afor] = _for;
+    roleAddress_[_for] = _afor;
   }
 
   function getRole_() view internal returns(uint8) {

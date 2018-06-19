@@ -1,7 +1,5 @@
 pragma solidity ^0.4.23;
 
-
-
 contract IRoleModel {
   /**
   * @dev RL_DEFAULT is role of basic account for example: investor
