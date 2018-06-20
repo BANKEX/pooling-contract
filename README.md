@@ -122,7 +122,7 @@ ___
 
 #### Visualiation of cashflow:
 
-![Image of cashflow](https://octodex.github.com/images/yaktocat.png)
+![Image of cashflow](https://github.com/EnoRage/POA/blob/master/POOLING_CASHFLOW.jpg)
 
 ## Using
 ___
