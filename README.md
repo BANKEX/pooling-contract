@@ -122,6 +122,8 @@ ___
 
 #### Visualiation of cashflow:
 
+![Image of cashflow](https://drive.google.com/file/d/1OPkgG2K1YTvK2wJxc1glw9H1-lCtHCyS/view?usp=sharing)
+
 ## Using
 ___
 
