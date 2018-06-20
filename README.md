@@ -122,7 +122,7 @@ ___
 
 #### Visualiation of cashflow:
 
-![Image of cashflow](https://github.com/EnoRage/POA/blob/master/POOLING_CASHFLOW.jpg)
+![Image of cashflow](https://raw.githubusercontent.com/EnoRage/POA/master/POOLING_CASHFLOW.jpg)
 
 ## Using
 ___
