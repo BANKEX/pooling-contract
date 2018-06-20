@@ -76,7 +76,7 @@ Every common state (*ST\_DEFAULT, ST\_RAISING,ST\_WAIT\_FOR\_ICO and e.t.c*) are
 6. After **distributionPeriod** ends and pooling contract is not working anymore. Only **Admin** can work with it. --- **ST\_FUND\_DEPRICATED**
 
 #### Visualiation of states:
-
+![Image of States](https://raw.githubusercontent.com/EnoRage/POA/master/POOLING.jpg)
 ## How it works (part 3: Shares)
 ___
 Every stakeholder have it's own share from all invested sum
