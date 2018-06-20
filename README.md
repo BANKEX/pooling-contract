@@ -124,7 +124,7 @@ ___
 
 ![Image of cashflow](https://raw.githubusercontent.com/EnoRage/POA/master/POOLING_CASHFLOW.jpg)
 
-## Using
+## Usage
 ___
 
  You can find examples at: test/PoolTest.js
@@ -165,3 +165,11 @@ You may get this `TOKEN` after [registration](https://infura.io/).
 Strictly recommended to use solium linter. `solium -d contracts`
 
 If you have compilation errors due to `emit Event` in solidity, update truffle.
+
+## for developers
+
+|||
+|---|---|
+| natspec documentation | [link](https://bankex.github.io/pooling-contract/docs/PoolProd/)  |
+| testing pooling contract  | [link](https://github.com/BANKEX/pooling-contract/blob/master/contracts/testing/PoolTest/PoolTest.sol) |
+| production pooling contract | [link](https://github.com/BANKEX/pooling-contract/blob/master/contracts/production/poolProd/PoolProd.sol) |
