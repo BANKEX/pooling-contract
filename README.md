@@ -127,7 +127,7 @@ ___
 
  You can find examples at: test/PoolTest.js
  
- ##### Some small examples:
+##### Some small examples:
 Function **setState()** - change state of pooling 
  ```javascript 
 const tbn = v => web3.toBigNumber(v);
