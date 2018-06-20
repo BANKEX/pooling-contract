@@ -122,7 +122,7 @@ ___
 
 #### Visualiation of cashflow:
 
-![Image of cashflow](https://git.bankex.team/proof_of_asset/pooling/blob/master/README_docs/POOLING_CASHFLOW.png)
+![Image of cashflow](https://github.com/EnoRage/POA/blob/master/POOLING_CASHFLOW.png)
 
 ## Using
 ___
