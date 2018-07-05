@@ -142,8 +142,7 @@ const fw = v => web3._extend.utils.fromWei(v).toString();
 
 const TOKEN_SUPPLY = tw(10);
 const MINIMAL_DEPOSIT_SIZE = tw(0.05);
-const TI_DAY = tbn(864000000);
-
+const TI_DAY = tbn(86400);
 const ST_DEFAULT = tbn(0x00);
 const ST_RAISING = tbn(0x01);
 const ST_WAIT_FOR_ICO = tbn(0x02);
