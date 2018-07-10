@@ -18,6 +18,7 @@ contract PoolProd is Pool, TimeMachineP {
    * @param _poolManagerAddress address of pool manager
    * @param _ICOManagerAddress address of ICO manager
    * @param  _paybotAddress address of pay bot
+   * @param _tokenPrice price of one erc20 token in ethers (if zero - ICOManager determine number of tokens by authority)
    */
   constructor(uint _raisingPeriod, 
               uint _icoPeriod, 
@@ -30,7 +31,8 @@ contract PoolProd is Pool, TimeMachineP {
               address _poolManagerAddress,
               address _ICOManagerAddress,
               address _paybotAddress,
-              address _tokenAddress) public {
+              address _tokenAddress,
+              uint _tokenPrice) public {
     
     raisingPeriod = _raisingPeriod;
     icoPeriod = _icoPeriod;
@@ -51,5 +53,6 @@ contract PoolProd is Pool, TimeMachineP {
     setRole_(RL_PAYBOT, _paybotAddress);
 
     tokenAddress = _tokenAddress;
+    tokenPrice = _tokenPrice;
   }
 }

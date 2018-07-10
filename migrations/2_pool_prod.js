@@ -24,18 +24,14 @@ module.exports = function(deployer, network, accounts) {
   const ICO_MANAGER_ADDRESS = accounts[8];
   const PAYBOT_ADDRESS = accounts[9];
   const TOKEN_ADDRESS = '0x15d16cf1620f924d77B302f5CEf75Ee9816B672F';
+  let tokenPrice = tw(0);
 
   (async () => {
-    console.log(JSON.stringify([RAISING_PERIOD, ICO_PERIOD, DISTRIBUTION_PERIOD, 
-      MINIMAL_FUND_SIZE, MAXIMAL_FUND_SIZE, MINIMAL_DEPOSIT, 
-      ADMIN_SHARE, POOL_MANAGER_SHARE, 
-      POOL_MANAGER_ADDRESS, ICO_MANAGER_ADDRESS, PAYBOT_ADDRESS].map(x=>x.toString())))
-
     await deployer.deploy(PoolProd, 
       RAISING_PERIOD, ICO_PERIOD, DISTRIBUTION_PERIOD, 
       MINIMAL_FUND_SIZE, MAXIMAL_FUND_SIZE, MINIMAL_DEPOSIT, 
       ADMIN_SHARE, POOL_MANAGER_SHARE, 
-      POOL_MANAGER_ADDRESS, ICO_MANAGER_ADDRESS, PAYBOT_ADDRESS, TOKEN_ADDRESS,
+      POOL_MANAGER_ADDRESS, ICO_MANAGER_ADDRESS, PAYBOT_ADDRESS, TOKEN_ADDRESS, tokenPrice, 
       {from:operator});
     await PoolProd.deployed();
   })();

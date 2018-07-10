@@ -178,6 +178,8 @@ const RL_PAYBOT = tbn(0x08);
 
 const gasPrice = tw("3e-7");
 
+let tokenPrice = tbn(0);
+
 contract('Pool Common test', (accounts) => {
 
     const ADMIN = accounts[0];
@@ -207,7 +209,7 @@ contract('Pool Common test', (accounts) => {
             MINIMAL_FUND_SIZE, MAXIMAL_FUND_SIZE, MINIMAL_DEPOSIT_SIZE,
             ADMIN_SHARE, POOL_MANAGER_SHARE,
             POOL_MANAGER, ICO_MANAGER, PAYBOT,
-            token.address, {
+            token.address, tokenPrice, {
                 from: ADMIN
             }
         );

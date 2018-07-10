@@ -17,7 +17,8 @@ contract PoolTest is Pool, TimeMachineT {
               address _poolManagerAddress,
               address _ICOManagerAddress,
               address _paybotAddress,
-              address _tokenAddress) public {
+              address _tokenAddress,
+              uint _tokenPrice) public {
     raisingPeriod = _raisingPeriod;
     icoPeriod = _icoPeriod;
     distributionPeriod = _distributionPeriod;
@@ -37,5 +38,6 @@ contract PoolTest is Pool, TimeMachineT {
     setRole_(RL_PAYBOT, _paybotAddress);
 
     tokenAddress = _tokenAddress;
+    tokenPrice = _tokenPrice;
   }
 }

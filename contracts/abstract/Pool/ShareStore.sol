@@ -45,6 +45,11 @@ contract ShareStore is IRoleModel, IShareStore, IStateModel {
   mapping (address=>uint) internal tokenReleased_;
   mapping (uint8=>uint) internal stakeholderEtherReleased_;
   uint constant DECIMAL_MULTIPLIER = 1e18;
+
+  /**
+  * @dev price of one token in ethers
+  */
+  uint public tokenPrice;
   
   /**
   * @dev payable function which does:
@@ -92,8 +97,6 @@ contract ShareStore is IRoleModel, IShareStore, IStateModel {
   * @return result of operation, true if success
   */
   function acceptTokenFromICO(uint _value) external returns(bool) {
-    require(getState_() == ST_WAIT_FOR_ICO);
-    require(getRole_() == RL_ICO_MANAGER);
     return acceptTokenFromICO_(_value);
   }
   
@@ -130,7 +133,10 @@ contract ShareStore is IRoleModel, IShareStore, IStateModel {
   * @return result of operation, true if success
   */
   function releaseEtherToStakeholder(uint _value) external returns(bool) {
-    return releaseEtherToStakeholder_(getState_(), getRole_(), _value);
+    uint8 _state = getState_();
+    uint8 _for = getRole_();
+    require(!((_for == RL_ICO_MANAGER) && ((_state != ST_WAIT_FOR_ICO) || (tokenPrice > 0))));
+    return releaseEtherToStakeholder_(_state, _for, _value);
   }
   
   /**
@@ -142,7 +148,9 @@ contract ShareStore is IRoleModel, IShareStore, IStateModel {
   function releaseEtherToStakeholderForce(uint8 _for, uint _value) external returns(bool) {
     uint8 _role = getRole_();
     require((_role==RL_ADMIN) || (_role==RL_PAYBOT));
-    return releaseEtherToStakeholder_(getState_(), _for, _value);
+    uint8 _state = getState_();
+    require(!((_for == RL_ICO_MANAGER) && ((_state != ST_WAIT_FOR_ICO) || (tokenPrice > 0))));
+    return releaseEtherToStakeholder_(_state, _for, _value);
   }
   
   /**
@@ -169,6 +177,25 @@ contract ShareStore is IRoleModel, IShareStore, IStateModel {
     require((_role==RL_ADMIN) || (_role==RL_PAYBOT));
     return releaseEther_(_for, _value);
   }
+
+  /**
+  * @dev Release amount of ETH to person by admin or paybot
+  * @param _for addresses of persons
+  * @param _value amounts of ETH in wei
+  * @return result of operation, true if success
+  */
+  function releaseEtherForceMulti(address[] _for, uint[] _value) external returns(bool) {
+    uint _sz = _for.length;
+    require(_value.length == _sz);
+    uint8 _role = getRole_();
+    uint8 _state = getState_();
+    require(_state == ST_TOKEN_DISTRIBUTION);
+    require((_role==RL_ADMIN) || (_role==RL_PAYBOT));
+    for (uint i = 0; i < _sz; i++){
+      require(releaseEther_(_for[i], _value[i]));
+    }
+    return true;
+  }
   
   /**
   * @dev Release amount of tokens to msg.sender
@@ -193,6 +220,26 @@ contract ShareStore is IRoleModel, IShareStore, IStateModel {
     require(_state == ST_TOKEN_DISTRIBUTION);
     require((_role==RL_ADMIN) || (_role==RL_PAYBOT));
     return releaseToken_(_for, _value);
+  }
+
+
+  /**
+  * @dev Release amount of tokens to person by admin or paybot
+  * @param _for addresses of persons
+  * @param _value amounts of tokens
+  * @return result of operation, true if success
+  */
+  function releaseTokenForceMulti(address[] _for, uint[] _value) external returns(bool) {
+    uint _sz = _for.length;
+    require(_value.length == _sz);
+    uint8 _role = getRole_();
+    uint8 _state = getState_();
+    require(_state == ST_TOKEN_DISTRIBUTION);
+    require((_role==RL_ADMIN) || (_role==RL_PAYBOT));
+    for(uint i = 0; i < _sz; i++){
+      require(releaseToken_(_for[i], _value[i]));
+    }
+    return true;
   }
   
   /**
@@ -258,9 +305,17 @@ contract ShareStore is IRoleModel, IShareStore, IStateModel {
   }
 
   function acceptTokenFromICO_(uint _value) internal returns(bool) {
+    uint8 _state = getState_();
+    uint8 _for = getRole_();
+    require(_state == ST_WAIT_FOR_ICO);
+    require(_for == RL_ICO_MANAGER);
+    
     totalToken = totalToken.add(_value);
     emit AcceptTokenFromICO(msg.sender, _value);
     require(IERC20(tokenAddress).transferFrom(msg.sender, this, _value));
+    if (tokenPrice > 0) {
+      releaseEtherToStakeholder_(_state, _for, _value.mul(DECIMAL_MULTIPLIER).div(tokenPrice));
+    }
     return true;
   }
 
