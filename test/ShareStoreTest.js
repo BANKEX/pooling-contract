@@ -623,6 +623,108 @@ contract('ShareStore COMMON TEST', (accounts) => {
         }
     });
 
+    it("should allow to release ether and tokens by forceMulti from admin", async function () {
+        const gasPrice = tw("3e-7");
+        let tokenLocal = await Token.new(TOKEN_SUPPLY, {from: accounts[2]});
+        let shareLocal = await ShareStoreTest.new(MINIMAL_DEPOSIT_SIZE, tokenLocal.address, TOKEN_PRICE);
+        await shareLocal.setRoleTestData(RL_POOL_MANAGER, accounts[0]);
+        await shareLocal.setState(ST_RAISING, {from: accounts[0]});
+        assert(ST_RAISING.eq(await shareLocal.getState()));
+        for (let i = 3; i < 10; i++) {
+            await shareLocal.sendTransaction({value: INVESTOR_SUM_PAY, from: accounts[i]});
+        }
+        let investedSum = INVESTOR_SUM_PAY.mul(7);
+        await shareLocal.setRoleTestData(RL_ICO_MANAGER, accounts[2]);
+        await shareLocal.setState(ST_WAIT_FOR_ICO, {form: accounts[2]});
+        let allowedBalance = await shareLocal.getStakeholderBalanceOf(RL_ICO_MANAGER);
+        let goodAllowedBalance = investedSum.mul(ICO_MANAGER_SHARE).div(DECIMAL_MULTIPLIER);
+        assert(allowedBalance.eq(goodAllowedBalance));
+        let acceptedSum = !TOKEN_PRICE.eq('0') ? allowedBalance.mul(DECIMAL_MULTIPLIER).div(TOKEN_PRICE) : TOKEN_SUPPLY;
+        await tokenLocal.approve(shareLocal.address,acceptedSum, {from: accounts[2]});
+        let allowedTokens = await tokenLocal.allowance(accounts[2], shareLocal.address);
+        let balBefore = await web3.eth.getBalance(accounts[2]);
+        let instance = await shareLocal.acceptTokenFromICO(acceptedSum, {
+            from: accounts[2],
+            gasPrice: gasPrice
+        });
+        let instance2 = TOKEN_PRICE.eq('0') ? 
+            await shareLocal.releaseEtherToStakeholder(goodAllowedBalance, {from: accounts[2], gasPrice: gasPrice}) : 
+            {receipt: {gasUsed: 0}};
+        let gasUsed = instance.receipt.gasUsed;
+        let gasUsed2 = instance2.receipt.gasUsed;
+        let transactionCost = gasPrice.mul(gasUsed);
+        let transactionCost2 = gasPrice.mul(gasUsed2);
+        let balAfter = (await web3.eth.getBalance(accounts[2]));
+        assert(balAfter.eq(balBefore.plus(goodAllowedBalance).minus(transactionCost.plus(transactionCost2))));
+        await shareLocal.setState(ST_TOKEN_DISTRIBUTION);
+
+        let balancesBefore = [];
+        balancesBefore.push(0);
+        balancesBefore.push(0);
+        balancesBefore.push(0);
+
+        let feeFirst = [];
+        feeFirst.push(0);
+        feeFirst.push(0);
+        feeFirst.push(0);
+
+        let allowedSum = [];
+        allowedSum.push(0);
+        allowedSum.push(0);
+        allowedSum.push(0);
+
+        let allowedTokensOF = [];
+        allowedTokensOF.push(0);
+        allowedTokensOF.push(0);
+        allowedTokensOF.push(0);
+
+        for (let i = 3; i < 10; i++) {
+            let bb = await web3.eth.getBalance(accounts[i]);
+            balancesBefore.push(bb);
+        }
+
+        await shareLocal.setRoleTestData(RL_ADMIN, accounts[1]);
+
+        let accountsArray = [];
+        let ethAmountArray = [];
+        let tokenAmountArray = [];
+
+        for (let i = 3; i < 10; i++) {
+            accountsArray.push(accounts[i]);
+            let tb = await shareLocal.getBalanceTokenOf(accounts[i]);
+            let eb = await shareLocal.getBalanceEtherOf(accounts[i]);
+            ethAmountArray.push(eb);
+            tokenAmountArray.push(tb);
+            allowedSum.push(eb);
+            allowedTokensOF.push(tb);
+        }
+
+        let instnace1 = await shareLocal.releaseTokenForceMulti(accountsArray, tokenAmountArray, {
+            from: accounts[1],
+            gasPrice: gasPrice
+        });
+
+        let instnace2 = await shareLocal.releaseEtherForceMulti(accountsArray, ethAmountArray, {
+            from: accounts[1],
+            gasPrice: gasPrice
+        });
+
+        let balancesAfter = [];
+        balancesAfter.push(0);
+        balancesAfter.push(0);
+        balancesAfter.push(0);
+
+        for (let i = 3; i < 10; i++) {
+            let bb = await web3.eth.getBalance(accounts[i]);
+            balancesAfter.push(bb);
+        }
+
+        for (let i = 3; i < 10; i++) {
+            assert(((balancesAfter[i])).eq((balancesBefore[i]).plus(allowedSum[i])));
+            assert((await tokenLocal.balanceOf(accounts[i])).eq(allowedTokensOF[i]));
+        }
+    });
+
     it("should allow to release ether and tokens just by payable function", async function () {
         const gasPrice = tw("3e-7");
         let tokenLocal = await Token.new(TOKEN_SUPPLY, {from: accounts[2]});

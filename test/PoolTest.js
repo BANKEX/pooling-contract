@@ -309,7 +309,7 @@ contract('Pool Common test', (accounts) => {
              // True if balance after release ETH to ICO manger equals to balance before plus ICO manager share minus gas cost 
             assert(balAfter.eq(balBefore.plus(goodAllowedBalance).minus(transactionCost.plus(transactionCost2))));        
         });
-        it('should release ether to stakeholder by admin', async () => {
+        it('should release ether and tokens to stakeholder by admin', async () => {
             await pool.setState(ST_RAISING, {from: POOL_MANAGER});
             for (let i in investors)
                 await pool.sendTransaction({value: INVESTOR_SUM_PAY, from: investors[i]});
@@ -531,6 +531,58 @@ contract('Pool Common test', (accounts) => {
                 let erc20TokenBalance = await token.balanceOf(investors[i]);
                 // True if amount of tokens that investor could get equals to current investor's token balance
                 assert(poolingTokenBalance.eq(erc20TokenBalance));
+            }
+        });
+        it('should allow to release ETH and Tokens by admin via forceMulti', async () => {
+            await pool.setState(ST_RAISING, {from: POOL_MANAGER});
+            for (let i in investors)
+                await pool.sendTransaction({value: INVESTOR_SUM_PAY, from: investors[i]});
+            let totalSentETH = await pool.totalShare();
+            await pool.setState(ST_WAIT_FOR_ICO, {from: ICO_MANAGER});
+            let allowedBalance = await pool.getStakeholderBalanceOf(RL_ICO_MANAGER);
+            let acceptedSum = !TOKEN_PRICE.eq('0') ? allowedBalance.mul(DECIMAL_MULTIPLIER).div(TOKEN_PRICE) : TOKEN_SUPPLY;
+            await token.approve(pool.address,acceptedSum, {from: ICO_MANAGER});
+            let allowedTokens = await token.allowance(ICO_MANAGER, pool.address);
+            let instance = await pool.acceptTokenFromICO(acceptedSum, {from: ICO_MANAGER, gasPrice: gasPrice});
+            let instance2 = TOKEN_PRICE.eq('0') ? 
+                await pool.releaseEtherToStakeholder(allowedBalance, {from: ICO_MANAGER, gasPrice: gasPrice}) : 
+                {receipt: {gasUsed: 0}};
+            await pool.setState(ST_TOKEN_DISTRIBUTION, {from: ADMIN});
+            // The Array of investos
+            let investorsArray = [];
+            // Amount of eth that investors will have to receive
+            let ethAmountArray = [];
+            let ethAmountObj = {};
+            // Amount of tpkens that investors will have to receive
+            let tokenAmountArray = [];
+            let tokenAmountObj = {};
+            let balancesBefore = {};
+            for (let i in investors) {
+                investorsArray.push(investors[i]);
+                // Get amount of ETH that investor can get
+                let poolingETHBalance = await pool.getBalanceEtherOf(investors[i]);
+                // Get amount of tokens that investor can get
+                let poolingTokenBalance = await pool.getBalanceTokenOf(investors[i]);
+                ethAmountArray.push(poolingETHBalance);
+                ethAmountObj[i] = poolingETHBalance;
+                tokenAmountArray.push(poolingTokenBalance);
+                tokenAmountObj[i] = poolingTokenBalance;
+                // True if amount of tokens that investor can get equals to sum, which investor paid, 
+                // divided by total sending amount of ETH (this is investor share)
+                // and multiplied by total allowed amount of tokens
+                assert(poolingTokenBalance.eq(INVESTOR_SUM_PAY.mul(acceptedSum).div(totalSentETH)));
+                // Investor's balance before release ETH
+                balancesBefore[i] = await web3.eth.getBalance(investors[i]);
+            }
+            // All investor will receive their tokens 
+            await pool.releaseTokenForceMulti(investorsArray, tokenAmountArray, {from: ADMIN, gasPrice: gasPrice});
+            // All investor will receive their eth
+            await pool.releaseEtherForceMulti(investorsArray, ethAmountArray, {from: ADMIN, gasPrice: gasPrice});
+            for (let i in investors) {
+                let balanceAfter = await web3.eth.getBalance(investors[i]);
+                assert(balanceAfter.eq(balancesBefore[i].plus(ethAmountObj[i])));
+                let tokenBalance = await token.balanceOf(investors[i]);
+                assert(tokenBalance.eq(tokenAmountObj[i]));
             }
         });
         it('should allow to make money back via sendTransaction ', async () => {
