@@ -9,18 +9,19 @@ contract ShareStoreTest is ShareStore, TimeMachineT {
   address internal roleAddress_;
   
   uint256 public max_value_test = 2 ** 256 - 1;
-
+  
 
   uint8 internal state_;
   uint maximalFundSize;
 
-  constructor(uint _minimalDeposit, address _tokenAddress) public {
+  constructor(uint _minimalDeposit, address _tokenAddress, uint _tokenPrice) public {
     maximalFundSize = 1000000000000000000000;
     minimalDeposit = _minimalDeposit;
     tokenAddress = _tokenAddress;
     stakeholderShare[1] = 40000000000000000;
     stakeholderShare[2] = 950000000000000000;
     stakeholderShare[4] = 10000000000000000;
+    tokenPrice = _tokenPrice;
   }
 
 

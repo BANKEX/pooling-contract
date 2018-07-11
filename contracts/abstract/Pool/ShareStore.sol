@@ -314,7 +314,7 @@ contract ShareStore is IRoleModel, IShareStore, IStateModel {
     emit AcceptTokenFromICO(msg.sender, _value);
     require(IERC20(tokenAddress).transferFrom(msg.sender, this, _value));
     if (tokenPrice > 0) {
-      releaseEtherToStakeholder_(_state, _for, _value.mul(DECIMAL_MULTIPLIER).div(tokenPrice));
+      releaseEtherToStakeholder_(_state, _for, _value.mul(tokenPrice).div(DECIMAL_MULTIPLIER));
     }
     return true;
   }
