@@ -128,6 +128,10 @@ ___
 ___
 
  You can find examples at: test/PoolTest.js
+
+ Pool can be launched with two states:
+ 1. `tokenPrice`, last argument in constructor is zero. Then ICO manager accepts any value of ether from the pool, after that ICO mananger send token to the pool.
+ 2. if `tokenPrice` is not equal, when ICO manager send token to the pool, contract pays to ICO manager ether, computing via `tokenPrice`.
  
 ##### Some small examples:
 Function **setState()** - change state of pooling 
